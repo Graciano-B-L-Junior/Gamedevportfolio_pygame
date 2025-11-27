@@ -93,6 +93,7 @@ def bird_animation_sprite():
     bird_img.set_colorkey(WHITE)
     bird_img = pygame.transform.flip(bird_img, True, False)
 
+    bird_img = rotate_bird(bird_img)
     SCREEN.blit(bird_img, bird_rect)
 
 generate_new_pipes()
@@ -110,6 +111,19 @@ def reset_game():
     last_pipe_time = pygame.time.get_ticks()
 
 last_pipe_time = pygame.time.get_ticks()
+
+def rotate_bird(image):
+    angle = velocity_y * -2
+    
+    rotated_bird = pygame.transform.rotate(image, angle)
+
+    print(angle)
+
+    if angle < -60: angle = -60
+
+    if angle > 80: angle = 80
+
+    return rotated_bird
 
 
 while running:
@@ -152,6 +166,8 @@ while running:
         
         SCREEN.fill(BLUE_SKY)
         bird_animation_sprite()
+        
+
 
         for pipe in pipes:
             pipe.move()
