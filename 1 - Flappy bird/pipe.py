@@ -16,11 +16,6 @@ class Pipe:
         script_dir = os.path.dirname(os.path.abspath(__file__))
         assets_dir = os.path.join(script_dir, 'assets')
         pipe_img_path = os.path.join(assets_dir, 'pipe.png')
-        self.pipe_img = pygame.image.load(pipe_img_path).convert_alpha()
-        self.pipe_img = pygame.transform.scale(self.pipe_img, (self.width, self.pipe_img.get_height()))
-        self.pipe_img_rotated = pygame.transform.scale(self.pipe_img, (self.width, self.pipe_img.get_height()))
-
-
 
         center_space_y = random.randint(HEIGH_SPACE, HEIGHT - HEIGH_SPACE)
         self.top_pipe_rect = pygame.Rect(
@@ -31,9 +26,18 @@ class Pipe:
             self.pos_x, center_space_y + HEIGH_SPACE, self.width, HEIGHT - (center_space_y + HEIGH_SPACE)
         )
 
+        self.pipe_img = pygame.image.load(pipe_img_path).convert_alpha()
+        self.top_pipe_img = pygame.transform.scale(self.pipe_img, (self.width, center_space_y-HEIGH_SPACE))
+        self.top_pipe_img = pygame.transform.rotate(self.top_pipe_img, 180)
+
+        self.bottom_pipe_img = pygame.transform.scale(
+            self.pipe_img, 
+            (self.width, HEIGHT - (center_space_y + HEIGH_SPACE))
+        )
+
     def draw(self, screen):
-        screen.blit(self.pipe_img_rotated, self.top_pipe_rect)
-        screen.blit(self.pipe_img, self.bottom_pipe_rect)
+        screen.blit(self.top_pipe_img, self.top_pipe_rect)
+        screen.blit(self.bottom_pipe_img, self.bottom_pipe_rect)
 
 
     def move(self):

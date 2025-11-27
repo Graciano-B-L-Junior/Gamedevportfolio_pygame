@@ -13,6 +13,7 @@ pygame.display.set_caption("Flappy Bird clone")
 #colors
 
 WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
 BLUE_SKY = (113, 197, 207)
 
 CLOCK = pygame.time.Clock()
@@ -22,7 +23,7 @@ VELOCITY = -25
 
 #game loop
 
-bird_size = 30
+bird_size = 50
 bird_pos_x = WIDTH // 4
 bird_pos_y = HEIGHT // 2
 bird_rect = pygame.Rect(
@@ -41,7 +42,8 @@ bird_assets = [
     pygame.image.load(os.path.join(assets_dir, 'bird3.png')).convert_alpha()
 ]
 bird_img_index=0
-bird_img = bird_assets[bird_img_index]  
+bird_img = bird_assets[bird_img_index]
+bird_animation_velocity = 0.1
 
 
 GAME_OVER = False
@@ -59,8 +61,21 @@ def generate_new_pipes():
     pipes.append(new_pipe)
 
 def show_score():
-    score_text = font.render(f"Score: {score}", True, WHITE)
+    score_text = font.render(f"Score: {score}", True, BLACK)
     SCREEN.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, 20))
+
+def bird_animation_sprite():
+    global bird_img_index, SCREEN
+    global bird_animation_velocity, bird_assets
+    bird_img_index += bird_animation_velocity
+    if bird_img_index >= len(bird_assets):
+        bird_img_index = 0
+    bird_img = bird_assets[int(bird_img_index)]
+    bird_img = pygame.transform.scale(bird_img, (bird_size, bird_size))
+    bird_img.set_colorkey(WHITE)
+    bird_img = pygame.transform.flip(bird_img, True, False)
+
+    SCREEN.blit(bird_img, bird_rect)
 
 generate_new_pipes()
 
@@ -102,7 +117,9 @@ while running:
 
         
         SCREEN.fill(BLUE_SKY)
-        pygame.draw.rect(SCREEN, WHITE, bird_rect)
+        bird_animation_sprite()
+
+
         for pipe in pipes:
             pipe.move()
             pipe.draw(SCREEN)
@@ -120,7 +137,7 @@ while running:
                 pipes.remove(pipe)
 
         if GAME_OVER:
-            game_over_text = font.render("Game Over", True, WHITE)
+            game_over_text = font.render("Game Over", True, BLACK)
             SCREEN.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - game_over_text.get_height() // 2))
             
 
