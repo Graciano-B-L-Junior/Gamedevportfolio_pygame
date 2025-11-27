@@ -3,6 +3,7 @@ import pygame
 from pipe import Pipe
 
 pygame.init()
+pygame.mixer.init()
 
 WIDTH = 600
 HEIGHT = 800
@@ -41,10 +42,27 @@ bird_assets = [
     pygame.image.load(os.path.join(assets_dir, 'bird2.png')).convert_alpha(),
     pygame.image.load(os.path.join(assets_dir, 'bird3.png')).convert_alpha()
 ]
+
+
 bird_img_index=0
 bird_img = bird_assets[bird_img_index]
 bird_animation_velocity = 0.1
 
+music_bgm = os.path.join(assets_dir, 'audio/music_loop.mp3')
+pygame.mixer.music.load(music_bgm)
+pygame.mixer.music.play(-1)
+
+sfx_fly = os.path.join(assets_dir, 'audio/fly_sfx.mp3')
+sfx_point = os.path.join(assets_dir, 'audio/point_sfx.mp3')
+
+sfx_fly_sound = pygame.mixer.Sound(sfx_fly)
+sfx_point_sound = pygame.mixer.Sound(sfx_point)
+
+sfx_fly_sound.set_volume(0.5)
+sfx_point_sound.set_volume(0.5)
+
+
+print(music_bgm)
 
 GAME_OVER = False
 
@@ -79,6 +97,18 @@ def bird_animation_sprite():
 
 generate_new_pipes()
 
+def reset_game():
+    global pipes, score, GAME_OVER, velocity_y, last_pipe_time
+
+    GAME_OVER = False
+    score = 0
+    velocity_y = 0
+    bird_rect.y = HEIGHT // 2
+
+    pipes.clear()
+    generate_new_pipes()
+    last_pipe_time = pygame.time.get_ticks()
+
 last_pipe_time = pygame.time.get_ticks()
 
 
@@ -88,9 +118,14 @@ while running:
             pygame.quit()
             sys.exit()
         
-        if event.type == pygame.KEYDOWN and not GAME_OVER:
+        if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
-                velocity_y = VELOCITY
+                if not GAME_OVER:
+                    velocity_y = VELOCITY
+                    sfx_fly_sound.play()
+                else:
+                    # Restart the game
+                    reset_game()
 
     if not GAME_OVER:
 
@@ -114,11 +149,9 @@ while running:
         if current_time - last_pipe_time > 2500:
             generate_new_pipes()
             last_pipe_time = current_time
-
         
         SCREEN.fill(BLUE_SKY)
         bird_animation_sprite()
-
 
         for pipe in pipes:
             pipe.move()
@@ -129,22 +162,21 @@ while running:
             if pipe.pos_x + pipe.width < bird_rect.x and not pipe.passed:
                 score += 1
                 pipe.passed = True
+                sfx_point_sound.play()
 
         show_score()
 
         for pipe in pipes:
             if pipe.pos_x + pipe.width < 0:
                 pipes.remove(pipe)
-
-        if GAME_OVER:
-            game_over_text = font.render("Game Over", True, BLACK)
-            SCREEN.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - game_over_text.get_height() // 2))
-            
-
-
-        pygame.display.flip()
-
-        CLOCK.tick(FPS)
+    else: # When GAME_OVER is True
+        game_over_text = font.render("Game Over", True, BLACK)
+        SCREEN.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - game_over_text.get_height() // 2))
+        restart_text = font.render("Press SPACE to restart", True, BLACK)
+        SCREEN.blit(restart_text, (WIDTH // 2 - restart_text.get_width() // 2, HEIGHT // 2 + 50))
+        
+    pygame.display.flip()
+    CLOCK.tick(FPS)
 
 pygame.quit()
 quit()
