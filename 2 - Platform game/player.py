@@ -1,7 +1,7 @@
 import pygame
 
 class Player:
-    def __init__(self, x, y):
+    def __init__(self, x, y, game_screen):
         self.x = x
         self.y = y
         self.width = 50
@@ -16,11 +16,13 @@ class Player:
         self.y_velocity = 0
         self.gravity = 1
         self.on_ground = False
+
+        self.screen_width = game_screen
         
     def draw(self, surface):
         pygame.draw.rect(surface, self.color, self.rect)
 
-    def update(self, other_rects):
+    def update(self, other_rects, **kwargs):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             self.rect.x -= self.speed
@@ -55,5 +57,12 @@ class Player:
 
         self.x = self.rect.x
         self.y = self.rect.y
+
+        if self.rect.right > self.screen_width:
+            self.rect.right = self.screen_width
+        if self.rect.left < 0:
+            self.rect.left = 0
+
+
 
             

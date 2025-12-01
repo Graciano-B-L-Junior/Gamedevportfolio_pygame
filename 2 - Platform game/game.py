@@ -3,8 +3,10 @@ from player import Player
 
 class Game:
 
-    GROUND_COLOR = (0, 150, 0)
+    GROUND_EARTH = (139, 69, 19) 
+    GREEN_GROUND = (0, 150, 0)
     WHITE = (255, 255, 255)
+
 
 
     def __init__(self):
@@ -16,9 +18,6 @@ class Game:
 
         self.clock = pygame.time.Clock()
         self.running = True
-
-        self.player = Player(100, 450)
-
         self.platforms = [
         ]
 
@@ -41,9 +40,14 @@ class Game:
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         ]
+        self.player = Player(2 * self.TILE_SIZE, 5 * self.TILE_SIZE, self.screen_width)
 
-        MAP_HEIGHT_PIXELS = len(self.TILEMAP) * self.TILE_SIZE
-        MAP_WIDTH_PIXELS = len(self.TILEMAP[0]) * self.TILE_SIZE
+        self.cam_offset_x = 0
+        self.cam_offset_y = 0
+
+        self.target_cam_x = 0
+        self.MAP_HEIGHT_PIXELS = len(self.TILEMAP) * self.TILE_SIZE
+        self.MAP_WIDTH_PIXELS = len(self.TILEMAP[0]) * self.TILE_SIZE
     
 
 
@@ -53,14 +57,36 @@ class Game:
                 self.running = False
 
     def update(self):
+        self.target_cam_x = self.player.rect.x - self.screen_width // 2
+        if self.target_cam_x < 0:
+            self.cam_offset_x = 0
+        elif self.target_cam_x > self.MAP_WIDTH_PIXELS - self.screen_width:
+            self.cam_offset_x = self.MAP_WIDTH_PIXELS - self.screen_width
+        else:
+            self.cam_offset_x = self.target_cam_x
         self.player.update(self.platforms)
 
 
     def draw(self):
         self.screen.fill((135, 206, 235))  # Sky blue background
         self.player.draw(self.screen)
-        for platform in self.platforms:
-            pygame.draw.rect(self.screen, Game.GROUND_COLOR, platform)
+        self.platforms=[]
+        for y_map, line in enumerate(self.TILEMAP):
+            for x_map, tile in enumerate(line):
+
+                pos_x_world = x_map * self.TILE_SIZE
+                pos_y_world = y_map * self.TILE_SIZE
+
+                pos_x_screen = pos_x_world - self.cam_offset_x
+                rect = None
+                if pos_x_screen + self.TILE_SIZE > 0 and pos_x_screen < self.screen_width:
+                    if tile == 1:
+                       rect = pygame.draw.rect(self.screen, self.GROUND_EARTH, (pos_x_screen, pos_y_world, self.TILE_SIZE, self.TILE_SIZE))
+                    elif tile == 2:
+                        rect =pygame.draw.rect(self.screen, self.GREEN_GROUND, (pos_x_screen, pos_y_world, self.TILE_SIZE, self.TILE_SIZE))
+                if rect:
+                    self.platforms.append(rect)
+
         pygame.display.flip()
 
     def run(self):
