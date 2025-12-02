@@ -46,6 +46,9 @@ class Game:
         self.cam_offset_y = 0
 
         self.target_cam_x = 0
+        self.last_cam_offset_x = 0
+        self.cam_offset_x_range = self.TILE_SIZE * 2
+
         self.MAP_HEIGHT_PIXELS = len(self.TILEMAP) * self.TILE_SIZE
         self.MAP_WIDTH_PIXELS = len(self.TILEMAP[0]) * self.TILE_SIZE
     
@@ -64,11 +67,24 @@ class Game:
             self.cam_offset_x = self.MAP_WIDTH_PIXELS - self.screen_width
         else:
             self.cam_offset_x = self.target_cam_x
-        self.player.update(self.platforms)
+        
+        cam_is_moving = False
 
+        if self.last_cam_offset_x + self.cam_offset_x_range //2 < self.cam_offset_x:
+            cam_is_moving = True
+        elif self.last_cam_offset_x - self.cam_offset_x_range //2 > self.cam_offset_x:
+            cam_is_moving = True
+        
+        self.player.update(
+            self.platforms, 
+            cam_offset_x=self.cam_offset_x, 
+            cam_is_moving=cam_is_moving
+        )
+
+        self.last_cam_offset_x = self.cam_offset_x
 
     def draw(self):
-        self.screen.fill((135, 206, 235))  # Sky blue background
+        self.screen.fill((135, 206, 235))
         self.player.draw(self.screen)
         self.platforms=[]
         for y_map, line in enumerate(self.TILEMAP):

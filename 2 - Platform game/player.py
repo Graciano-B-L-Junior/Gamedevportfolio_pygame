@@ -19,11 +19,20 @@ class Player:
 
         self.screen_width = game_screen
         
-    def draw(self, surface):
-        pygame.draw.rect(surface, self.color, self.rect)
+    def draw(self, surface, cam_offset_x=0):
+        player_screen_rect = self.rect.copy()
+        player_screen_rect.x -= cam_offset_x
+        self.rect = pygame.draw.rect(surface, self.color, player_screen_rect)
 
     def update(self, other_rects, **kwargs):
         keys = pygame.key.get_pressed()
+
+        if kwargs.get("cam_offset_x") and kwargs.get('cam_is_moving'):
+            self.speed = 3.5
+        else:
+            self.speed = 5
+
+
         if keys[pygame.K_LEFT]:
             self.rect.x -= self.speed
         if keys[pygame.K_RIGHT]:
@@ -62,7 +71,3 @@ class Player:
             self.rect.right = self.screen_width
         if self.rect.left < 0:
             self.rect.left = 0
-
-
-
-            
