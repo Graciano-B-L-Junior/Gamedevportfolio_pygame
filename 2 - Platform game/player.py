@@ -16,6 +16,7 @@ class Player:
         self.y_velocity = 0
         self.gravity = 1
         self.on_ground = False
+        self.is_jumping = False
         self.high_jump = -0.3
 
         self.screen_width = game_screen
@@ -35,8 +36,18 @@ class Player:
         if keys[pygame.K_SPACE] and self.on_ground:
             self.y_velocity = self.jump_force
             self.on_ground = False
+            self.is_jumping = True
+
+        events = pygame.event.get()
+
+        for event in events:
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_SPACE:
+                    self.is_jumping = False
+                    break
+
         
-        if self.y_velocity < 0 and keys[pygame.K_SPACE]:
+        if self.is_jumping and keys[pygame.K_SPACE]:
             self.y_velocity += self.high_jump
         
         self.y_velocity += self.gravity
