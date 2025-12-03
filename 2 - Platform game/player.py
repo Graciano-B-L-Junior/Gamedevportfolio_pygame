@@ -16,38 +16,28 @@ class Player:
         self.y_velocity = 0
         self.gravity = 1
         self.on_ground = False
+        self.high_jump = -0.3
 
         self.screen_width = game_screen
         
-    def draw(self, surface, cam_offset_x=0):
-        player_screen_rect = self.rect.copy()
-        player_screen_rect.x -= cam_offset_x
-        self.rect = pygame.draw.rect(surface, self.color, player_screen_rect)
+    def draw(self, surface):
+        pygame.draw.rect(surface, self.color, self.rect)
 
     def update(self, other_rects, **kwargs):
         keys = pygame.key.get_pressed()
-
-        if kwargs.get("cam_offset_x") and kwargs.get('cam_is_moving'):
-            self.speed = 3.5
-        else:
-            self.speed = 5
-
+        self.speed = 5
 
         if keys[pygame.K_LEFT]:
             self.rect.x -= self.speed
         if keys[pygame.K_RIGHT]:
             self.rect.x += self.speed
 
-        for platform in other_rects:
-            if self.rect.colliderect(platform):
-                if self.rect.right > platform.left and self.rect.left < platform.left:
-                    self.rect.right = platform.left
-                elif self.rect.left < platform.right and self.rect.right > platform.right:
-                    self.rect.left = platform.right
-
         if keys[pygame.K_SPACE] and self.on_ground:
             self.y_velocity = self.jump_force
             self.on_ground = False
+        
+        if self.y_velocity < 0 and keys[pygame.K_SPACE]:
+            self.y_velocity += self.high_jump
         
         self.y_velocity += self.gravity
         self.y_velocity = min(self.y_velocity, self.maximum_fall_speed)
@@ -71,3 +61,12 @@ class Player:
             self.rect.right = self.screen_width
         if self.rect.left < 0:
             self.rect.left = 0
+        
+        for platform in other_rects:
+            if self.rect.colliderect(platform):
+                if self.rect.right > platform.left and self.rect.left < platform.left:
+                    self.rect.right = platform.left
+                elif self.rect.left < platform.right and self.rect.right > platform.right:
+                    self.rect.left = platform.right
+        if kwargs.get("cam_offset_x") and kwargs.get('cam_is_moving'):
+            self.rect.x -= kwargs.get("cam_offset_x")

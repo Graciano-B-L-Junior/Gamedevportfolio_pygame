@@ -75,9 +75,10 @@ class Game:
         elif self.last_cam_offset_x - self.cam_offset_x_range //2 > self.cam_offset_x:
             cam_is_moving = True
         
+        
         self.player.update(
             self.platforms, 
-            cam_offset_x=self.cam_offset_x, 
+            cam_offset_x=abs(self.cam_offset_x-self.last_cam_offset_x), 
             cam_is_moving=cam_is_moving
         )
 
