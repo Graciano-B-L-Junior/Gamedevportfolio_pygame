@@ -98,9 +98,9 @@ class Game:
                 rect = None
                 if pos_x_screen + self.TILE_SIZE > 0 and pos_x_screen < self.screen_width:
                     if tile == 1:
-                       rect = pygame.draw.rect(self.screen, self.GROUND_EARTH, (pos_x_screen, pos_y_world, self.TILE_SIZE, self.TILE_SIZE))
+                        rect = pygame.draw.rect(self.screen, self.GROUND_EARTH, (pos_x_screen, pos_y_world, self.TILE_SIZE, self.TILE_SIZE))
                     elif tile == 2:
-                        rect =pygame.draw.rect(self.screen, self.GREEN_GROUND, (pos_x_screen, pos_y_world, self.TILE_SIZE, self.TILE_SIZE))
+                        rect = pygame.draw.rect(self.screen, self.GREEN_GROUND, (pos_x_screen, pos_y_world, self.TILE_SIZE, self.TILE_SIZE))
                 if rect:
                     self.platforms.append(rect)
 
