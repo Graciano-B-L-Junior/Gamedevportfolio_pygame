@@ -11,7 +11,7 @@ class Game:
 
     def __init__(self):
         pygame.init()
-        self.screen_width = 800
+        self.screen_width = 900
         self.screen_height = 600
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption("2D Platformer")
@@ -32,10 +32,10 @@ class Game:
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0],
+            [2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2],
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -60,7 +60,7 @@ class Game:
                 self.running = False
 
     def update(self):
-        self.target_cam_x = self.player.rect.x - self.screen_width // 2
+        self.target_cam_x = self.player.rect.centerx - self.screen_width // 2
         if self.target_cam_x < 0:
             self.cam_offset_x = 0
         elif self.target_cam_x > self.MAP_WIDTH_PIXELS - self.screen_width:
@@ -77,8 +77,7 @@ class Game:
         
         
         self.player.update(
-            self.platforms, 
-            cam_offset_x=abs(self.cam_offset_x-self.last_cam_offset_x), 
+            self.platforms,
             cam_is_moving=cam_is_moving
         )
 
@@ -86,7 +85,6 @@ class Game:
 
     def draw(self):
         self.screen.fill((135, 206, 235))
-        self.player.draw(self.screen)
         self.platforms=[]
         for y_map, line in enumerate(self.TILEMAP):
             for x_map, tile in enumerate(line):
@@ -103,6 +101,7 @@ class Game:
                         rect = pygame.draw.rect(self.screen, self.GREEN_GROUND, (pos_x_screen, pos_y_world, self.TILE_SIZE, self.TILE_SIZE))
                 if rect:
                     self.platforms.append(rect)
+        self.player.draw(self.screen)
 
         pygame.display.flip()
 

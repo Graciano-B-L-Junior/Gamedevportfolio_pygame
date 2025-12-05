@@ -12,6 +12,9 @@ class Player:
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         self.last_position_rect = self.rect.copy()
         self.color = (255, 0, 0)
+        self.acceleration = 0.5
+        self.max_acceleration = 1
+        self.friction = 0.4
 
         self.y_velocity = 0
         self.gravity = 1
@@ -48,6 +51,19 @@ class Player:
             dx -= self.speed
         if keys[pygame.K_RIGHT]:
             dx += self.speed
+
+        if keys[pygame.K_c]:
+            dx = dx + (dx * self.acceleration)
+            dx = min(dx, self.maximum_fall_speed)
+
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_c:
+                    dx = dx - (dx * self.friction)
+                    dx = max(dx, -self.maximum_fall_speed)
+        
+
 
         self.rect.x += dx
         for platform in other_rects:
