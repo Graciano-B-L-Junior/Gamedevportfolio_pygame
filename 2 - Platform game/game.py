@@ -68,14 +68,19 @@ class Game:
         else:
             self.cam_offset_x = self.target_cam_x
         
-        cam_is_moving = False
+        dead_zone_left = self.screen_width // 2 - self.cam_offset_x_range // 2
+        dead_zone_right = self.screen_width // 2 + self.cam_offset_x_range // 2
 
-        if self.last_cam_offset_x + self.cam_offset_x_range //2 < self.cam_offset_x:
+        cam_is_moving = False
+        if self.player.rect.centerx > dead_zone_right + self.cam_offset_x:
+            self.cam_offset_x = self.player.rect.centerx - dead_zone_right
             cam_is_moving = True
-        elif self.last_cam_offset_x - self.cam_offset_x_range //2 > self.cam_offset_x:
+        elif self.player.rect.centerx < dead_zone_left + self.cam_offset_x:
+            self.cam_offset_x = self.player.rect.centerx - dead_zone_left
             cam_is_moving = True
-        
-        
+
+        self.cam_offset_x = max(0, min(self.cam_offset_x, self.MAP_WIDTH_PIXELS - self.screen_width))
+
         self.player.update(
             self.platforms,
             cam_is_moving=cam_is_moving

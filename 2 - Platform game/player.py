@@ -12,10 +12,9 @@ class Player:
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         self.last_position_rect = self.rect.copy()
         self.color = (255, 0, 0)
-        self.acceleration = 0.5
-        self.max_acceleration = 1
-        self.friction = 0.4
-
+        self.dx = 0
+        self.acceleration_rate = 1.5
+        self.friction = 0.15
         self.y_velocity = 0
         self.gravity = 1
         self.on_ground = False
@@ -29,8 +28,6 @@ class Player:
 
     def update(self, other_rects, **kwargs):
         keys = pygame.key.get_pressed()
-        dx = 0
-        dy = 0
 
         if keys[pygame.K_SPACE] and self.on_ground:
             self.y_velocity = self.jump_force
@@ -48,44 +45,43 @@ class Player:
             self.speed = 5
 
         if keys[pygame.K_LEFT]:
-            dx -= self.speed
-        if keys[pygame.K_RIGHT]:
-            dx += self.speed
+            self.dx -= self.acceleration_rate
+        elif keys[pygame.K_RIGHT]:
+            self.dx += self.acceleration_rate
+        else:
+            if self.dx > 0:
+                self.dx -= self.friction
+                if self.dx < 0: self.dx = 0
+            elif self.dx < 0:
+                self.dx += self.friction
+                if self.dx > 0: self.dx = 0
 
-        if keys[pygame.K_c]:
-            dx = dx + (dx * self.acceleration)
-            dx = min(dx, self.maximum_fall_speed)
+        if self.dx > self.speed:
+            self.dx = self.speed
+        if self.dx < -self.speed:
+            self.dx = -self.speed
 
-        events = pygame.event.get()
-        for event in events:
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_c:
-                    dx = dx - (dx * self.friction)
-                    dx = max(dx, -self.maximum_fall_speed)
-        
-
-
-        self.rect.x += dx
+        self.rect.x += self.dx
         for platform in other_rects:
             if self.rect.colliderect(platform):
-                if dx > 0:
+                if self.dx > 0:
                     self.rect.right = platform.left
-                elif dx < 0:
+                elif self.dx < 0:
                     self.rect.left = platform.right
+                self.dx = 0
 
         self.y_velocity += self.gravity
-        self.y_velocity = min(self.y_velocity, self.maximum_fall_speed)
-        dy = self.y_velocity
+        self.y_velocity = min(self.y_velocity, self.maximum_fall_speed) 
 
-        self.rect.y += dy
+        self.rect.y += self.y_velocity
         self.on_ground = False
         for platform in other_rects:
             if self.rect.colliderect(platform):
-                if dy > 0:
+                if self.y_velocity > 0:
                     self.rect.bottom = platform.top
                     self.y_velocity = 0
                     self.on_ground = True
-                elif dy < 0:
+                elif self.y_velocity < 0:
                     self.rect.top = platform.bottom
                     self.y_velocity = 0
         if self.rect.right > self.screen_width:
