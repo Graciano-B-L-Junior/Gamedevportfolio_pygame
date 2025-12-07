@@ -57,7 +57,7 @@ class Game:
             if event.type == pygame.QUIT:
                 self.running = False
 
-    def update(self):
+    def update(self,delta_time):
         self.platforms = []
         for y_map, line in enumerate(self.TILEMAP):
             for x_map, tile in enumerate(line):
@@ -92,7 +92,8 @@ class Game:
 
         self.player.update(
             self.platforms,
-            cam_is_moving=cam_is_moving
+            cam_is_moving=cam_is_moving,
+            delta_time=delta_time,
         )
 
         self.last_cam_offset_x = self.cam_offset_x
@@ -117,8 +118,9 @@ class Game:
 
     def run(self):
         while self.running:
+            delta_time = self.clock.get_time() / 1000.0
             self.handle_input()
-            self.update()
+            self.update(delta_time=delta_time)
             self.draw()
             self.clock.tick(60)
 
