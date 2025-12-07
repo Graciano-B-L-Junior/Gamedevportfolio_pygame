@@ -63,6 +63,7 @@ class Player:
 
         self.rect.x += self.dx
         for platform in other_rects:
+            platform = platform[0]
             if self.rect.colliderect(platform):
                 if self.dx > 0:
                     self.rect.right = platform.left
@@ -76,6 +77,7 @@ class Player:
         self.rect.y += self.y_velocity
         self.on_ground = False
         for platform in other_rects:
+            platform = platform[0]
             if self.rect.colliderect(platform):
                 if self.y_velocity > 0:
                     self.rect.bottom = platform.top

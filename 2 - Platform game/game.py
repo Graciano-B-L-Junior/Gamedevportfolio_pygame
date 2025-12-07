@@ -32,9 +32,9 @@ class Game:
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2],
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -51,8 +51,6 @@ class Game:
 
         self.MAP_HEIGHT_PIXELS = len(self.TILEMAP) * self.TILE_SIZE
         self.MAP_WIDTH_PIXELS = len(self.TILEMAP[0]) * self.TILE_SIZE
-    
-
 
     def handle_input(self):
         for event in pygame.event.get():
@@ -60,6 +58,17 @@ class Game:
                 self.running = False
 
     def update(self):
+        self.platforms = []
+        for y_map, line in enumerate(self.TILEMAP):
+            for x_map, tile in enumerate(line):
+                pos_x_world = x_map * self.TILE_SIZE
+                pos_y_world = y_map * self.TILE_SIZE
+                pos_x_screen = pos_x_world - self.cam_offset_x
+
+                if tile in [1, 2] and pos_x_screen + self.TILE_SIZE > 0 and pos_x_screen < self.screen_width:
+                    rect = pygame.Rect(pos_x_screen, pos_y_world, self.TILE_SIZE, self.TILE_SIZE)
+                    self.platforms.append((rect,tile))
+
         self.target_cam_x = self.player.rect.centerx - self.screen_width // 2
         if self.target_cam_x < 0:
             self.cam_offset_x = 0
@@ -90,22 +99,18 @@ class Game:
 
     def draw(self):
         self.screen.fill((135, 206, 235))
-        self.platforms=[]
-        for y_map, line in enumerate(self.TILEMAP):
-            for x_map, tile in enumerate(line):
 
-                pos_x_world = x_map * self.TILE_SIZE
-                pos_y_world = y_map * self.TILE_SIZE
+        for tuples in self.platforms:
+            platform_rect = tuples[0]
+            tile_type = tuples[1]
+            draw_rect = platform_rect
+            # draw_rect.x -= self.cam_offset_x
+            
+            if  tile_type == 1:
+                pygame.draw.rect(self.screen, self.GROUND_EARTH, draw_rect)
+            else:
+                pygame.draw.rect(self.screen, self.GREEN_GROUND, draw_rect)
 
-                pos_x_screen = pos_x_world - self.cam_offset_x
-                rect = None
-                if pos_x_screen + self.TILE_SIZE > 0 and pos_x_screen < self.screen_width:
-                    if tile == 1:
-                        rect = pygame.draw.rect(self.screen, self.GROUND_EARTH, (pos_x_screen, pos_y_world, self.TILE_SIZE, self.TILE_SIZE))
-                    elif tile == 2:
-                        rect = pygame.draw.rect(self.screen, self.GREEN_GROUND, (pos_x_screen, pos_y_world, self.TILE_SIZE, self.TILE_SIZE))
-                if rect:
-                    self.platforms.append(rect)
         self.player.draw(self.screen)
 
         pygame.display.flip()
