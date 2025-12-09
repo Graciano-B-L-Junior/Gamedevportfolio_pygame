@@ -10,6 +10,8 @@ class Player:
         self.jump_force = -20
         self.maximum_fall_speed = 10
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
+        self.old_x = self.rect.x
+        self.old_y = self.rect.y
         self.color = (255, 0, 0)
         self.dx = 0 
         self.acceleration_rate = 15
@@ -61,32 +63,36 @@ class Player:
             self.dx = self.speed
         if self.dx < -self.speed:
             self.dx = -self.speed
+
         
+        self.old_x = self.rect.x
         self.rect.x += self.dx
         for platform in other_rects:
             platform = platform[0]
             if self.rect.colliderect(platform):
                 if self.dx > 0:
-                    self.rect.right = platform.left
+                    self.rect.right = platform.left - 0.1
                 elif self.dx < 0:
-                    self.rect.left = platform.right
+                    self.rect.left = platform.right + 0.1
                 self.dx = 0
 
         self.y_velocity += self.gravity * delta_time
-        self.y_velocity = min(self.y_velocity, self.maximum_fall_speed) 
+        self.y_velocity = min(self.y_velocity, self.maximum_fall_speed)
 
+        self.old_y = self.rect.y
         self.rect.y += self.y_velocity
         self.on_ground = False
         for platform in other_rects:
             platform = platform[0]
             if self.rect.colliderect(platform):
                 if self.y_velocity > 0:
-                    self.rect.bottom = platform.top
+                    self.rect.y = self.old_y
                     self.y_velocity = 0
                     self.on_ground = True
                 elif self.y_velocity < 0:
-                    self.rect.top = platform.bottom
+                    self.rect.y = self.old_y
                     self.y_velocity = 0
+
         if self.rect.right > self.screen_width:
             self.rect.right = self.screen_width
             self.dx = 0
