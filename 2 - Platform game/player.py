@@ -21,6 +21,9 @@ class Player:
         self.on_ground = False
         self.is_jumping = False
         self.high_jump = -18
+        self.COYOTE_DURATION = 0.15
+        self.coyote_time = 0
+        self.is_colliding = False
 
         self.screen_width = game_screen
         
@@ -28,16 +31,22 @@ class Player:
         pygame.draw.rect(surface, self.color, self.rect)
 
     def update(self, other_rects, **kwargs):
+        self.is_colliding = False
         keys = pygame.key.get_pressed()
         delta_time = kwargs.get("delta_time")
-        if delta_time is None: delta_time = 1/60.0 # Failsafe
+        if delta_time is None: delta_time = 1/60.0
+ 
+        if not self.on_ground:
+            self.coyote_time -= delta_time
 
-        if keys[pygame.K_SPACE] and self.on_ground:
+        if (keys[pygame.K_SPACE] or keys[pygame.K_UP]) and (self.on_ground or self.coyote_time > 0):
             self.y_velocity = self.jump_force
             self.on_ground = False
             self.is_jumping = True
+
+            self.coyote_time = 0 
         
-        if self.is_jumping and keys[pygame.K_SPACE]:
+        if self.is_jumping:
             self.y_velocity += self.high_jump * delta_time
         else:
             self.is_jumping = False
@@ -70,11 +79,14 @@ class Player:
         for platform in other_rects:
             platform = platform[0]
             if self.rect.colliderect(platform):
+                mtv_x = self.get_mtv_x(platform, self.dx)
+                
                 if self.dx > 0:
-                    self.rect.right = platform.left - 0.1
+                    self.rect.right += mtv_x
                 elif self.dx < 0:
-                    self.rect.left = platform.right + 0.1
+                    self.rect.left += mtv_x
                 self.dx = 0
+                self.is_colliding=True
 
         self.y_velocity += self.gravity * delta_time
         self.y_velocity = min(self.y_velocity, self.maximum_fall_speed)
@@ -89,9 +101,12 @@ class Player:
                     self.rect.y = self.old_y
                     self.y_velocity = 0
                     self.on_ground = True
+                    self.coyote_time = self.COYOTE_DURATION
                 elif self.y_velocity < 0:
                     self.rect.y = self.old_y
                     self.y_velocity = 0
+                self.is_colliding=True
+        
 
         if self.rect.right > self.screen_width:
             self.rect.right = self.screen_width
@@ -99,4 +114,16 @@ class Player:
         if self.rect.left < 0:
             self.rect.left = 0
             self.dx = 0
+
+    def get_mtv_x(self, rect, move_x):
+        overlap_right = self.rect.right - rect.left
+        overlap_left = rect.right - self.rect.left
+
+        if move_x > 0 and self.rect.right > rect.left:
+            return -overlap_right
+        elif move_x < 0 and self.rect.left < rect.right:
+            return overlap_left
+        else:
+            return 0
+
         
