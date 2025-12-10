@@ -24,6 +24,8 @@ class Player:
         self.COYOTE_DURATION = 0.15
         self.coyote_time = 0
         self.is_colliding = False
+        self.buffer_jump = 0
+        self.BUFFER_JUMP_DURATION = 0.15
 
         self.screen_width = game_screen
         
@@ -38,13 +40,20 @@ class Player:
  
         if not self.on_ground:
             self.coyote_time -= delta_time
+        
+        if self.buffer_jump > 0:
+            self.buffer_jump -= delta_time
 
+        if keys[pygame.K_SPACE] or keys[pygame.K_UP]:
+            self.buffer_jump = self.BUFFER_JUMP_DURATION
+        
+
+        # Condição de pulo normal (e com coyote time)
         if (keys[pygame.K_SPACE] or keys[pygame.K_UP]) and (self.on_ground or self.coyote_time > 0):
             self.y_velocity = self.jump_force
             self.on_ground = False
             self.is_jumping = True
-
-            self.coyote_time = 0 
+            self.coyote_time = 0
         
         if self.is_jumping:
             self.y_velocity += self.high_jump * delta_time
@@ -102,6 +111,13 @@ class Player:
                     self.y_velocity = 0
                     self.on_ground = True
                     self.coyote_time = self.COYOTE_DURATION
+                    # Verifica se o pulo foi "bufferizado"
+                    if self.buffer_jump > 0:
+                        self.y_velocity = self.jump_force
+                        self.on_ground = False
+                        self.is_jumping = True
+                        self.coyote_time = 0
+                        self.buffer_jump = 0 # Consome o buffer
                 elif self.y_velocity < 0:
                     self.rect.y = self.old_y
                     self.y_velocity = 0
