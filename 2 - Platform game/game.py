@@ -56,6 +56,7 @@ class Game:
         self.cam_offset_y = 0
 
         self.target_cam_x = 0
+        self.cam_smoothing = 5 # Fator de suavização. Quanto maior, mais rápido a câmera segue.
         self.last_cam_offset_x = 0
         self.cam_offset_x_range = self.TILE_SIZE * 2
 
@@ -90,31 +91,16 @@ class Game:
                     self.platforms.append((rect,tile))
 
         self.target_cam_x = self.player.rect.centerx - self.screen_width // 2
-        if self.target_cam_x < 0:
-            self.cam_offset_x = 0
-        elif self.target_cam_x > self.MAP_WIDTH_PIXELS - self.screen_width:
-            self.cam_offset_x = self.MAP_WIDTH_PIXELS - self.screen_width
-        else:
-            self.cam_offset_x = self.target_cam_x
-        
-        dead_zone_left = self.screen_width // 2 - self.cam_offset_x_range // 2
-        dead_zone_right = self.screen_width // 2 + self.cam_offset_x_range // 2
 
-        cam_is_moving = False
-        if self.player.rect.centerx > dead_zone_right + self.cam_offset_x:
-            self.cam_offset_x = self.player.rect.centerx - dead_zone_right
-            cam_is_moving = True
-        elif self.player.rect.centerx < dead_zone_left + self.cam_offset_x:
-            self.cam_offset_x = self.player.rect.centerx - dead_zone_left
-            cam_is_moving = True
+        self.cam_offset_x += (self.target_cam_x - self.cam_offset_x) * self.cam_smoothing * delta_time
 
         self.cam_offset_x = max(0, min(self.cam_offset_x, self.MAP_WIDTH_PIXELS - self.screen_width))
+        
         self.difference = self.cam_offset_x - self.last_cam_offset_x
         
         self.last_cam_offset_x = self.cam_offset_x
         self.player.update(
-            self.platforms,
-            cam_is_moving=cam_is_moving,
+            other_rects=self.platforms,
             delta_time=delta_time,
             offset_x=self.difference
         )
