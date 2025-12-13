@@ -6,7 +6,7 @@ class Player:
         self.y = y
         self.width = 50
         self.height = 50
-        self.speed = 100
+        self.speed = 20
         self.jump_force = -20
         self.maximum_fall_speed = 10
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
@@ -14,7 +14,7 @@ class Player:
         self.old_y = self.rect.y
         self.color = (255, 0, 0)
         self.dx = 0 
-        self.acceleration_rate = 15
+        self.acceleration_rate = 10
         self.friction = 30 
         self.y_velocity = 0
         self.gravity = 60
@@ -26,6 +26,7 @@ class Player:
         self.is_colliding = False
         self.buffer_jump = 0
         self.BUFFER_JUMP_DURATION = 0.15
+        self.coins_collected = 0
 
         self.screen_width = game_screen
         
@@ -47,8 +48,6 @@ class Player:
         if keys[pygame.K_SPACE] or keys[pygame.K_UP]:
             self.buffer_jump = self.BUFFER_JUMP_DURATION
         
-
-        # Condição de pulo normal (e com coyote time)
         if (keys[pygame.K_SPACE] or keys[pygame.K_UP]) and (self.on_ground or self.coyote_time > 0):
             self.y_velocity = self.jump_force
             self.on_ground = False
@@ -61,14 +60,14 @@ class Player:
             self.is_jumping = False
 
         if kwargs.get("cam_offset_x") and kwargs.get('cam_is_moving'):
-            self.speed = 180
+            self.speed = 5
         else:
-            self.speed = 300
+            self.speed = 20
 
         if keys[pygame.K_LEFT]:
-            self.dx -= self.acceleration_rate * delta_time
+            self.dx -= (self.acceleration_rate * delta_time) + (kwargs.get("offset_x") * delta_time)
         elif keys[pygame.K_RIGHT]:
-            self.dx += self.acceleration_rate * delta_time
+            self.dx += (self.acceleration_rate * delta_time) - (kwargs.get("offset_x") * delta_time)
         else:
             if self.dx > 0:
                 self.dx -= self.friction * delta_time
@@ -82,9 +81,12 @@ class Player:
         if self.dx < -self.speed:
             self.dx = -self.speed
 
-        
+
         self.old_x = self.rect.x
+        offset_x = kwargs.get("offset_x")
+
         self.rect.x += self.dx
+
         for platform in other_rects:
             platform = platform[0]
             if self.rect.colliderect(platform):
@@ -141,5 +143,9 @@ class Player:
             return overlap_left
         else:
             return 0
+        
+    def update_collected_coins(self, qty):
+        self.coins_collected += qty
+       
 
         
