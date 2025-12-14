@@ -21,12 +21,10 @@ class Game:
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption("2D Platformer")
         self.ui = UI(game=self)
-        self.enemy = Enemy(50,50,50,50)
+        self.enemy = Enemy(250,50,50,50)
         self.clock = pygame.time.Clock()
         self.running = True
-        self.platforms = [
-            
-        ]
+        self.platforms = []
 
         
         self.TILEMAP = [
@@ -103,20 +101,27 @@ class Game:
         self.difference = self.cam_offset_x - self.last_cam_offset_x
         
         self.last_cam_offset_x = self.cam_offset_x
+
+        platform_rects = [p[0] for p in self.platforms]
         self.player.update(
-            other_rects=self.platforms,
+            other_rects=platform_rects,
             delta_time=delta_time,
             offset_x=self.difference
         )
-        
+
         for coin in self.coins:
             coin.update(self.player)
             if coin.collected:
                 self.coins.remove(coin)
 
-        self.enemy.update(delta_time)
-
-
+        self.enemy.update(
+            delta_time,
+            other_rects=[
+                *platform_rects,
+                self.player
+            ],
+            offset_x=self.difference
+        )
 
 
     def draw(self):

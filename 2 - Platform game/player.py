@@ -27,7 +27,6 @@ class Player:
         self.buffer_jump = 0
         self.BUFFER_JUMP_DURATION = 0.15
         self.coins_collected = 0
-
         self.screen_width = game_screen
         
     def draw(self, surface):
@@ -83,12 +82,9 @@ class Player:
 
 
         self.old_x = self.rect.x
-        offset_x = kwargs.get("offset_x")
-
         self.rect.x += self.dx
 
         for platform in other_rects:
-            platform = platform[0]
             if self.rect.colliderect(platform):
                 mtv_x = self.get_mtv_x(platform, self.dx)
                 
@@ -106,20 +102,18 @@ class Player:
         self.rect.y += self.y_velocity
         self.on_ground = False
         for platform in other_rects:
-            platform = platform[0]
             if self.rect.colliderect(platform):
                 if self.y_velocity > 0:
                     self.rect.y = self.old_y
                     self.y_velocity = 0
                     self.on_ground = True
                     self.coyote_time = self.COYOTE_DURATION
-                    # Verifica se o pulo foi "bufferizado"
                     if self.buffer_jump > 0:
                         self.y_velocity = self.jump_force
                         self.on_ground = False
                         self.is_jumping = True
                         self.coyote_time = 0
-                        self.buffer_jump = 0 # Consome o buffer
+                        self.buffer_jump = 0
                 elif self.y_velocity < 0:
                     self.rect.y = self.old_y
                     self.y_velocity = 0

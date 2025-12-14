@@ -1,3 +1,4 @@
+from player import Player
 
 class PhysicsEngine:
     def __init__(self):
@@ -18,23 +19,28 @@ class PhysicsEngine:
 
 
     def collision(self, other):
-        if self.vx > 0:
-            if self.rect.right > other.rect.left and self.rect.left < other.rect.right:
-                self.rect.right = other.rect.left
-                self.vx = 0
-        elif self.vx < 0:
-            if self.rect.left < other.rect.right and self.rect.right > other.rect.left:
-                self.rect.left = other.rect.right
-                self.vx = 0
+        if isinstance(other, Player):
+            other = other.rect
+        if hasattr(self, 'rect'):
+            if self.vx > 0:
+                if self.rect.right > other.left and self.rect.left < other.right:
+                    self.rect.right = other.left
+                    self.vx = 0
+            elif self.vx < 0:
+                if self.rect.left < other.right and self.rect.right > other.left:
+                    self.rect.left = other.right
+                    self.vx = 0
 
-        if self.vy > 0:
-            if self.rect.bottom > other.rect.top and self.rect.top < other.rect.bottom:
-                self.rect.bottom = other.rect.top
-                self.vy = 0
-        elif self.vy < 0:
-            if self.rect.top < other.rect.bottom and self.rect.bottom > other.rect.top:
-                self.rect.top = other.rect.bottom
-                self.vy = 0
+            if self.vy > 0:
+                if self.rect.bottom > other.top and self.rect.top < other.bottom:
+                    self.rect.bottom = other.top
+                    self.vy = 0
+            elif self.vy < 0:
+                if self.rect.top < other.bottom and self.rect.bottom > other.top:
+                    self.rect.top = other.bottom
+                    self.vy = 0
+        else:
+            raise Exception(f"{__class__} doesn't have 'rect' attribute")
     
 
     def update_vx(self, vx):
