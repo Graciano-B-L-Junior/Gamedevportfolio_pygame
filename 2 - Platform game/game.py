@@ -2,6 +2,8 @@ import pygame
 from player import Player
 from coin import Coin
 from ui import UI
+from enemy import Enemy
+
 
 
 class Game:
@@ -19,7 +21,7 @@ class Game:
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption("2D Platformer")
         self.ui = UI(game=self)
-
+        self.enemy = Enemy(50,50,50,50)
         self.clock = pygame.time.Clock()
         self.running = True
         self.platforms = [
@@ -62,6 +64,8 @@ class Game:
 
         self.MAP_HEIGHT_PIXELS = len(self.TILEMAP) * self.TILE_SIZE
         self.MAP_WIDTH_PIXELS = len(self.TILEMAP[0]) * self.TILE_SIZE
+        
+        self.enemy.set_other_rects([*self.platforms,self.player])
 
     def load_map(self):
         self.platforms = []
@@ -110,6 +114,9 @@ class Game:
             if coin.collected:
                 self.coins.remove(coin)
 
+        self.enemy.update(delta_time)
+
+
 
 
     def draw(self):
@@ -129,6 +136,7 @@ class Game:
             coin.draw(self.screen, self.cam_offset_x)
 
         self.player.draw(self.screen)
+        self.enemy.draw(self.screen)
         self.ui.draw(self.screen)
 
         pygame.display.flip()
