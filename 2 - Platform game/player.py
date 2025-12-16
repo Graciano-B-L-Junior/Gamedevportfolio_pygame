@@ -1,6 +1,6 @@
 import pygame
 
-class Player:
+class Player: #TODO: Refactor this class
     def __init__(self, x, y, game_screen):
         self.x = x
         self.y = y
@@ -9,65 +9,67 @@ class Player:
         self.speed = 20
         self.jump_force = -20
         self.maximum_fall_speed = 10
+        
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
-        self.old_x = self.rect.x
-        self.old_y = self.rect.y
         self.color = (255, 0, 0)
+
+        # Horizontal movement
         self.dx = 0 
         self.acceleration_rate = 10
         self.friction = 30 
+
+        # Vertical movement
         self.y_velocity = 0
         self.gravity = 60
         self.on_ground = False
-        self.is_jumping = False
-        self.high_jump = -18
+        self.is_holding_jump = False
+        self.variable_jump_multiplier = -18 # Reduces upward velocity when jump is held
+
+        # Advanced jump mechanics
         self.COYOTE_DURATION = 0.15
         self.coyote_time = 0
-        self.is_colliding = False
-        self.buffer_jump = 0
         self.BUFFER_JUMP_DURATION = 0.15
+        self.buffer_jump = 0
+
+        # State
+        self.wants_to_jump = False
+        self.move_direction = 0 # -1 for left, 1 for right, 0 for idle
+
+        # Game info
         self.coins_collected = 0
         self.screen_width = game_screen
         
-    def draw(self, surface):
-        pygame.draw.rect(surface, self.color, self.rect)
+    def draw(self, surface, offset_x=0):
+        draw_rect = self.rect.copy()
+        draw_rect.x -= offset_x
+        pygame.draw.rect(surface, self.color, draw_rect)
 
-    def update(self, other_rects, **kwargs):
-        self.is_colliding = False
+    def _handle_input(self):
         keys = pygame.key.get_pressed()
-        delta_time = kwargs.get("delta_time")
-        if delta_time is None: delta_time = 1/60.0
- 
+        
+        self.move_direction = 0
+        if keys[pygame.K_LEFT]:
+            self.move_direction = -1
+        elif keys[pygame.K_RIGHT]:
+            self.move_direction = 1
+
+        self.wants_to_jump = keys[pygame.K_SPACE] or keys[pygame.K_UP]
+        if self.wants_to_jump:
+            self.buffer_jump = self.BUFFER_JUMP_DURATION
+
+        self.is_holding_jump = self.wants_to_jump
+
+    def _update_timers(self, delta_time):
         if not self.on_ground:
             self.coyote_time -= delta_time
         
         if self.buffer_jump > 0:
             self.buffer_jump -= delta_time
 
-        if keys[pygame.K_SPACE] or keys[pygame.K_UP]:
-            self.buffer_jump = self.BUFFER_JUMP_DURATION
-        
-        if (keys[pygame.K_SPACE] or keys[pygame.K_UP]) and (self.on_ground or self.coyote_time > 0):
-            self.y_velocity = self.jump_force
-            self.on_ground = False
-            self.is_jumping = True
-            self.coyote_time = 0
-        
-        if self.is_jumping:
-            self.y_velocity += self.high_jump * delta_time
-        else:
-            self.is_jumping = False
-
-        if kwargs.get("cam_offset_x") and kwargs.get('cam_is_moving'):
-            self.speed = 5
-        else:
-            self.speed = 20
-
-        if keys[pygame.K_LEFT]:
-            self.dx -= (self.acceleration_rate * delta_time) + (kwargs.get("offset_x") * delta_time)
-        elif keys[pygame.K_RIGHT]:
-            self.dx += (self.acceleration_rate * delta_time) - (kwargs.get("offset_x") * delta_time)
-        else:
+    def _apply_horizontal_movement(self, delta_time, offset_x):
+        if self.move_direction != 0:
+            self.dx += (self.acceleration_rate * self.move_direction * delta_time)
+        else: # Apply friction
             if self.dx > 0:
                 self.dx -= self.friction * delta_time
                 if self.dx < 0: self.dx = 0
@@ -75,51 +77,48 @@ class Player:
                 self.dx += self.friction * delta_time
                 if self.dx > 0: self.dx = 0
 
-        if self.dx > self.speed:
-            self.dx = self.speed
-        if self.dx < -self.speed:
-            self.dx = -self.speed
+        self.dx = max(-self.speed, min(self.speed, self.dx))
 
+    def _apply_vertical_movement(self, delta_time):
+        # Jump logic
+        if self.buffer_jump > 0 and (self.on_ground or self.coyote_time > 0):
+            self.y_velocity = self.jump_force
+            self.on_ground = False
+            self.coyote_time = 0
+            self.buffer_jump = 0
+        
+        # Variable jump height
+        if self.is_holding_jump and self.y_velocity < 0:
+            self.y_velocity += self.variable_jump_multiplier * delta_time
 
-        self.old_x = self.rect.x
-        self.rect.x += self.dx
-
-        for platform in other_rects:
-            if self.rect.colliderect(platform):
-                mtv_x = self.get_mtv_x(platform, self.dx)
-                
-                if self.dx > 0:
-                    self.rect.right += mtv_x
-                elif self.dx < 0:
-                    self.rect.left += mtv_x
-                self.dx = 0
-                self.is_colliding=True
-
+        # Gravity
         self.y_velocity += self.gravity * delta_time
         self.y_velocity = min(self.y_velocity, self.maximum_fall_speed)
 
-        self.old_y = self.rect.y
+    def _handle_horizontal_collisions(self, other_rects):
+        self.rect.x += self.dx
+        for platform in other_rects:
+            if self.rect.colliderect(platform):
+                if self.dx > 0: # Moving right
+                    self.rect.right = platform.left
+                elif self.dx < 0: # Moving left
+                    self.rect.left = platform.right
+                self.dx = 0
+
+    def _handle_vertical_collisions(self, other_rects):
         self.rect.y += self.y_velocity
         self.on_ground = False
         for platform in other_rects:
             if self.rect.colliderect(platform):
-                if self.y_velocity > 0:
-                    self.rect.y = self.old_y
-                    self.y_velocity = 0
+                if self.y_velocity > 0: # Moving down
+                    self.rect.bottom = platform.top
                     self.on_ground = True
                     self.coyote_time = self.COYOTE_DURATION
-                    if self.buffer_jump > 0:
-                        self.y_velocity = self.jump_force
-                        self.on_ground = False
-                        self.is_jumping = True
-                        self.coyote_time = 0
-                        self.buffer_jump = 0
-                elif self.y_velocity < 0:
-                    self.rect.y = self.old_y
-                    self.y_velocity = 0
-                self.is_colliding=True
-        
+                elif self.y_velocity < 0: # Moving up
+                    self.rect.top = platform.bottom
+                self.y_velocity = 0
 
+    def _enforce_screen_boundaries(self):
         if self.rect.right > self.screen_width:
             self.rect.right = self.screen_width
             self.dx = 0
@@ -127,16 +126,18 @@ class Player:
             self.rect.left = 0
             self.dx = 0
 
-    def get_mtv_x(self, rect, move_x):
-        overlap_right = self.rect.right - rect.left
-        overlap_left = rect.right - self.rect.left
+    def update(self, other_rects, **kwargs):
+        delta_time = kwargs.get("delta_time")
+        if delta_time is None: delta_time = 1/60.0
 
-        if move_x > 0 and self.rect.right > rect.left:
-            return -overlap_right
-        elif move_x < 0 and self.rect.left < rect.right:
-            return overlap_left
-        else:
-            return 0
+        self._handle_input()
+        self._update_timers(delta_time)
+        self._apply_horizontal_movement(delta_time, kwargs.get("offset_x", 0))
+        self._apply_vertical_movement(delta_time)
+        
+        self._handle_horizontal_collisions(other_rects)
+        self._handle_vertical_collisions(other_rects)
+        self._enforce_screen_boundaries()
         
     def update_collected_coins(self, qty):
         self.coins_collected += qty

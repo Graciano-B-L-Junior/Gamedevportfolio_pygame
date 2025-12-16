@@ -15,8 +15,10 @@ class Enemy(PhysicsEngine):
         self.health = 2
 
 
-    def draw(self,win):
-        pygame.draw.rect(win,self.color_brown,self.rect)
+    def draw(self,win, offset_x=0):
+        draw_rect = self.rect.copy()
+        draw_rect.x -= offset_x
+        pygame.draw.rect(win,self.color_brown,draw_rect)
 
     def update(self,delta_time, other_rects=None, offset_x=0):
         super().update(delta_time)
