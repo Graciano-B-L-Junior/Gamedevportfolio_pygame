@@ -8,11 +8,13 @@ class PhysicsEngine:
         self.vx=0
         self.vy=0
         self.gravity = 100
+        self.speed = 100
         self.other_rects = []
 
 
     def update(self,delta_time):
         self.vy += self.gravity * delta_time
+        self.vx += self.speed * delta_time
         for rect in self.other_rects:
             self.collision(rect)
             
@@ -47,6 +49,21 @@ class PhysicsEngine:
                         self.vy = 0
         else:
             raise Exception(f"{__class__} doesn't have 'rect' attribute")
+        
+    def colliding_x_axis(self, other):
+        self.rect = self.get_rect()
+        if hasattr(self, 'rect'):
+            if self.rect.colliderect(other):
+                if self.vx > 0:
+                    if self.rect.right > other.left and self.rect.left < other.right:
+                        return True
+                elif self.vx < 0:
+                    if self.rect.left < other.right and self.rect.right > other.left:
+                        return True
+                return False
+            else:
+                return False
+
     
 
     def update_vx(self, vx):

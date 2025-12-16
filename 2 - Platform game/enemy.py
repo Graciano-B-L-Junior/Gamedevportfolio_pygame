@@ -21,6 +21,10 @@ class Enemy(PhysicsEngine):
         pygame.draw.rect(win,self.color_brown,draw_rect)
 
     def update(self,delta_time, other_rects=None, offset_x=0):
+        if self.colliding_x_axis(other_rects):
+            self.vx *= -1
+
+        
         super().update(delta_time)
         self.rect.x = self.get_x()
         self.rect.y = self.get_y()
