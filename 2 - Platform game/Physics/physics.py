@@ -74,8 +74,6 @@ class PhysicsEngine:
         if not is_ground_ahead:
             self.vx *= -1
 
-    # --- Getters and Setters ---
-
     def update_vx(self, vx):
         self.vx = vx
 
