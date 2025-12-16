@@ -23,7 +23,6 @@ TILEMAP = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ]
 
-
 class Game:
     GROUND_EARTH = (139, 69, 19) 
     GREEN_GROUND = (0, 150, 0)
@@ -60,7 +59,9 @@ class Game:
 
     def _create_entities(self):
         self.load_map()
-        self.player = Player(2 * self.TILE_SIZE, 5 * self.TILE_SIZE, self.screen_width)
+        world_x_size = len(TILEMAP[0]) * self.TILE_SIZE
+
+        self.player = Player(2 * self.TILE_SIZE, 5 * self.TILE_SIZE, world_x_size)
         self.enemy = Enemy(250, 50, 50, 50)
         self.ui = UI(game=self)
 
