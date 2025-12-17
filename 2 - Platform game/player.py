@@ -6,7 +6,7 @@ class Player: #TODO: Refactor this class
         self.y = y
         self.width = 50
         self.height = 50
-        self.speed = 20
+        self.speed = 5
         self.jump_force = -20
         self.maximum_fall_speed = 10
         
@@ -16,7 +16,8 @@ class Player: #TODO: Refactor this class
         # Horizontal movement
         self.dx = 0 
         self.acceleration_rate = 10
-        self.friction = 30 
+        self.friction = 30
+
 
         # Vertical movement
         self.y_velocity = 0
