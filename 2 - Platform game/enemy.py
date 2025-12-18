@@ -23,7 +23,23 @@ class Enemy(PhysicsEngine):
         pygame.draw.rect(win,self.color_brown,draw_rect)
         
     def update(self,delta_time, other_rects=None, offset_x=0):
-        # We only want to collide with platforms, not the player for movement
-        platform_rects = [r for r in other_rects if not isinstance(r, Player) and not r == self.rect]
-        self.other_rects = platform_rects
+        self.other_rects = other_rects
         super().update(delta_time)
+
+    def handle_horizontal_collisions(self):
+        for other in self.other_rects:
+            is_player_instance = False
+            if isinstance(other, Player):
+                is_player_instance = True
+                rect = other.rect
+            else:
+                rect = other
+            if self.rect.colliderect(rect):
+                if self.vx > 0:
+                    self.rect.right = rect.left
+                elif self.vx < 0:
+                    self.rect.left = rect.right
+                self.vx *= -1
+                self.x = self.rect.x 
+                if is_player_instance:
+                    other.knock_back_hit()

@@ -106,10 +106,10 @@ class Game:
             if coin.collected:
                 self.coins.remove(coin)
 
-        enemy_collidables = [*self.platform_rects, self.player.rect]
+        collidables = [*self.platform_rects, self.player]
         self.enemy.update(
             delta_time,
-            other_rects=enemy_collidables,
+            other_rects=collidables,
             offset_x=self.difference
         )
 

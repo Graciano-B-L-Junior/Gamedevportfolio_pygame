@@ -1,14 +1,18 @@
 import pygame
+from Physics.physics import PhysicsEngine
 
-class Player: #TODO: Refactor this class
+
+class Player(PhysicsEngine): #TODO: Refactor this class
     def __init__(self, x, y, game_screen):
         self.x = x
         self.y = y
         self.width = 50
         self.height = 50
-        self.speed = 5
+        self.max_speed = 5
         self.jump_force = -20
         self.maximum_fall_speed = 10
+        self.health = 3
+        self.knockback_force = 10
         
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         self.color = (255, 0, 0)
@@ -20,7 +24,7 @@ class Player: #TODO: Refactor this class
 
 
         # Vertical movement
-        self.y_velocity = 0
+        self.vy = 0
         self.gravity = 60
         self.on_ground = False
         self.is_holding_jump = False
@@ -78,46 +82,46 @@ class Player: #TODO: Refactor this class
                 self.dx += self.friction * delta_time
                 if self.dx > 0: self.dx = 0
 
-        self.dx = max(-self.speed, min(self.speed, self.dx))
+        self.dx = max(-self.max_speed, min(self.max_speed, self.dx))
 
     def _apply_vertical_movement(self, delta_time):
         # Jump logic
         if self.buffer_jump > 0 and (self.on_ground or self.coyote_time > 0):
-            self.y_velocity = self.jump_force
+            self.vy = self.jump_force
             self.on_ground = False
             self.coyote_time = 0
             self.buffer_jump = 0
         
         # Variable jump height
-        if self.is_holding_jump and self.y_velocity < 0:
-            self.y_velocity += self.variable_jump_multiplier * delta_time
+        if self.is_holding_jump and self.vy < 0:
+            self.vy += self.variable_jump_multiplier * delta_time
 
         # Gravity
-        self.y_velocity += self.gravity * delta_time
-        self.y_velocity = min(self.y_velocity, self.maximum_fall_speed)
+        self.vy += self.gravity * delta_time
+        self.vy = min(self.vy, self.maximum_fall_speed)
 
-    def _handle_horizontal_collisions(self, other_rects):
+    def handle_horizontal_collisions(self, other_rects):
         self.rect.x += self.dx
-        for platform in other_rects:
-            if self.rect.colliderect(platform):
-                if self.dx > 0: # Moving right
-                    self.rect.right = platform.left
-                elif self.dx < 0: # Moving left
-                    self.rect.left = platform.right
+        for rect in other_rects:
+            if self.rect.colliderect(rect):
+                if self.dx > 0:
+                    self.rect.right = rect.left
+                elif self.dx < 0:
+                    self.rect.left = rect.right
                 self.dx = 0
 
-    def _handle_vertical_collisions(self, other_rects):
-        self.rect.y += self.y_velocity
+    def handle_vertical_collisions(self, other_rects):
+        self.rect.y += self.vy
         self.on_ground = False
         for platform in other_rects:
             if self.rect.colliderect(platform):
-                if self.y_velocity > 0: # Moving down
+                if self.vy > 0: # Moving down
                     self.rect.bottom = platform.top
                     self.on_ground = True
                     self.coyote_time = self.COYOTE_DURATION
-                elif self.y_velocity < 0: # Moving up
+                elif self.vy < 0: # Moving up
                     self.rect.top = platform.bottom
-                self.y_velocity = 0
+                self.vy = 0
 
     def _enforce_screen_boundaries(self):
         if self.rect.right > self.screen_width:
@@ -136,9 +140,13 @@ class Player: #TODO: Refactor this class
         self._apply_horizontal_movement(delta_time, kwargs.get("offset_x", 0))
         self._apply_vertical_movement(delta_time)
         
-        self._handle_horizontal_collisions(other_rects)
-        self._handle_vertical_collisions(other_rects)
+        self.handle_horizontal_collisions(other_rects)
+        self.handle_vertical_collisions(other_rects)
         self._enforce_screen_boundaries()
+
+    def knock_back_hit(self):
+        self.vx = self.move_direction * self.knockback_force
+        self.vy = -self.knockback_force
         
     def update_collected_coins(self, qty):
         self.coins_collected += qty
