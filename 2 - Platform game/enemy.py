@@ -42,4 +42,4 @@ class Enemy(PhysicsEngine):
                 self.vx *= -1
                 self.x = self.rect.x 
                 if is_player_instance:
-                    other.knock_back_hit()
+                    other.knock_back_hit(self.rect)

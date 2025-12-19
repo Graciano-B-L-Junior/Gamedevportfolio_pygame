@@ -4,6 +4,7 @@ from Physics.physics import PhysicsEngine
 
 class Player(PhysicsEngine): #TODO: Refactor this class
     def __init__(self, x, y, game_screen):
+        super().__init__()
         self.x = x
         self.y = y
         self.width = 50
@@ -13,12 +14,15 @@ class Player(PhysicsEngine): #TODO: Refactor this class
         self.maximum_fall_speed = 10
         self.health = 3
         self.knockback_force = 10
+        self.hit_horizontal_positive = False
+        self.hit_horizontal_negative = False
+        self.apply_vertical_force_knock_back_hit = False
         
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         self.color = (255, 0, 0)
 
         # Horizontal movement
-        self.dx = 0 
+        self.vx = 0 
         self.acceleration_rate = 10
         self.friction = 30
 
@@ -73,16 +77,22 @@ class Player(PhysicsEngine): #TODO: Refactor this class
 
     def _apply_horizontal_movement(self, delta_time, offset_x):
         if self.move_direction != 0:
-            self.dx += (self.acceleration_rate * self.move_direction * delta_time)
+            self.vx += (self.acceleration_rate * self.move_direction * delta_time)
         else: # Apply friction
-            if self.dx > 0:
-                self.dx -= self.friction * delta_time
-                if self.dx < 0: self.dx = 0
-            elif self.dx < 0:
-                self.dx += self.friction * delta_time
-                if self.dx > 0: self.dx = 0
-
-        self.dx = max(-self.max_speed, min(self.max_speed, self.dx))
+            if self.vx > 0:
+                self.vx -= self.friction * delta_time
+                if self.vx < 0: self.vx = 0
+            elif self.vx < 0:
+                self.vx += self.friction * delta_time
+                if self.vx > 0: self.vx = 0
+        self.vx = max(-self.max_speed, min(self.max_speed, self.vx))
+        
+        if self.hit_horizontal_positive:
+            self.vx += self.knockback_force
+            self.hit_horizontal_positive = False
+        elif self.hit_horizontal_negative:
+            self.vx -= self.knockback_force
+            self.hit_horizontal_negative = False
 
     def _apply_vertical_movement(self, delta_time):
         # Jump logic
@@ -98,17 +108,20 @@ class Player(PhysicsEngine): #TODO: Refactor this class
 
         # Gravity
         self.vy += self.gravity * delta_time
+        if self.apply_vertical_force_knock_back_hit:
+            self.vy -= self.knockback_force
+            self.apply_vertical_force_knock_back_hit = False                
         self.vy = min(self.vy, self.maximum_fall_speed)
 
     def handle_horizontal_collisions(self, other_rects):
-        self.rect.x += self.dx
+        self.rect.x += self.vx
         for rect in other_rects:
             if self.rect.colliderect(rect):
-                if self.dx > 0:
+                if self.vx > 0:
                     self.rect.right = rect.left
-                elif self.dx < 0:
+                elif self.vx < 0:
                     self.rect.left = rect.right
-                self.dx = 0
+                self.vx = 0
 
     def handle_vertical_collisions(self, other_rects):
         self.rect.y += self.vy
@@ -126,10 +139,10 @@ class Player(PhysicsEngine): #TODO: Refactor this class
     def _enforce_screen_boundaries(self):
         if self.rect.right > self.screen_width:
             self.rect.right = self.screen_width
-            self.dx = 0
+            self.vx = 0
         if self.rect.left < 0:
             self.rect.left = 0
-            self.dx = 0
+            self.vx = 0
 
     def update(self, other_rects, **kwargs):
         delta_time = kwargs.get("delta_time")
@@ -144,9 +157,14 @@ class Player(PhysicsEngine): #TODO: Refactor this class
         self.handle_vertical_collisions(other_rects)
         self._enforce_screen_boundaries()
 
-    def knock_back_hit(self):
-        self.vx = self.move_direction * self.knockback_force
-        self.vy = -self.knockback_force
+    def knock_back_hit(self, enemy_rect):
+        if self.rect.centerx < enemy_rect.centerx:
+            self.hit_horizontal_negative = True
+        else:
+            self.hit_horizontal_positive = True
+
+        self.apply_vertical_force_knock_back_hit = True
+        
         
     def update_collected_coins(self, qty):
         self.coins_collected += qty

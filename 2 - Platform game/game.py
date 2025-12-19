@@ -141,7 +141,7 @@ class Game:
 
 
     def run(self):
-        while self.running:
+        while self.running: 
             delta_time = self.clock.get_time() / 1000.0
             self.handle_input()
             self.update(delta_time=delta_time)
