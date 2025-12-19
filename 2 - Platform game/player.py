@@ -13,10 +13,7 @@ class Player(PhysicsEngine): #TODO: Refactor this class
         self.jump_force = -20
         self.maximum_fall_speed = 10
         self.health = 3
-        self.knockback_force = 10
-        self.hit_horizontal_positive = False
-        self.hit_horizontal_negative = False
-        self.apply_vertical_force_knock_back_hit = False
+        self.knockback_impulse = 10
         
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         self.color = (255, 0, 0)
@@ -87,13 +84,6 @@ class Player(PhysicsEngine): #TODO: Refactor this class
                 if self.vx > 0: self.vx = 0
         self.vx = max(-self.max_speed, min(self.max_speed, self.vx))
         
-        if self.hit_horizontal_positive:
-            self.vx += self.knockback_force
-            self.hit_horizontal_positive = False
-        elif self.hit_horizontal_negative:
-            self.vx -= self.knockback_force
-            self.hit_horizontal_negative = False
-
     def _apply_vertical_movement(self, delta_time):
         # Jump logic
         if self.buffer_jump > 0 and (self.on_ground or self.coyote_time > 0):
@@ -108,9 +98,6 @@ class Player(PhysicsEngine): #TODO: Refactor this class
 
         # Gravity
         self.vy += self.gravity * delta_time
-        if self.apply_vertical_force_knock_back_hit:
-            self.vy -= self.knockback_force
-            self.apply_vertical_force_knock_back_hit = False                
         self.vy = min(self.vy, self.maximum_fall_speed)
 
     def handle_horizontal_collisions(self, other_rects):
@@ -158,13 +145,14 @@ class Player(PhysicsEngine): #TODO: Refactor this class
         self._enforce_screen_boundaries()
 
     def knock_back_hit(self, enemy_rect):
-        if self.rect.centerx < enemy_rect.centerx:
-            self.hit_horizontal_negative = True
-        else:
-            self.hit_horizontal_positive = True
+        # Aplica um impulso vertical para cima
+        self.vy = -self.knockback_impulse
 
-        self.apply_vertical_force_knock_back_hit = True
-        
+        # Aplica um impulso horizontal para longe do inimigo
+        if self.rect.centerx < enemy_rect.centerx: # Inimigo à direita
+            self.vx = -self.knockback_impulse
+        else:
+            self.vx = self.knockback_impulse
         
     def update_collected_coins(self, qty):
         self.coins_collected += qty
