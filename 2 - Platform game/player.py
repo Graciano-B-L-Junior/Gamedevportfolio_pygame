@@ -145,17 +145,25 @@ class Player(PhysicsEngine): #TODO: Refactor this class
         self._enforce_screen_boundaries()
 
     def knock_back_hit(self, enemy_rect):
-        # Aplica um impulso vertical para cima
+        self.update_vy(-self.knockback_impulse)
+        if self.rect.centerx < enemy_rect.centerx:
+            self.update_vx(-self.knockback_impulse)
+        else:
+            self.update_vx(self.knockback_impulse)
+        
+        self.health -= 1
+    
+    def jump_hit(self):
         self.vy = -self.knockback_impulse
 
-        # Aplica um impulso horizontal para longe do inimigo
-        if self.rect.centerx < enemy_rect.centerx: # Inimigo à direita
-            self.vx = -self.knockback_impulse
-        else:
-            self.vx = self.knockback_impulse
+        if self.vx != 0:
+            self.vx = self.move_direction * self.knockback_impulse
         
     def update_collected_coins(self, qty):
         self.coins_collected += qty
+
+    def player_dead(self):
+        return self.health <= 0
        
 
         

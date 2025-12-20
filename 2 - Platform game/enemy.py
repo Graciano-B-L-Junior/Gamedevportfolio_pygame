@@ -43,3 +43,28 @@ class Enemy(PhysicsEngine):
                 self.x = self.rect.x 
                 if is_player_instance:
                     other.knock_back_hit(self.rect)
+
+    def handle_vertical_collisions(self):
+        self.on_ground = False
+        for rect in self.other_rects:
+            is_player_instance = False
+            if isinstance(rect, Player):
+                is_player_instance = True
+                rect = rect.rect
+            if self.rect.colliderect(rect):
+                if self.vy > 0:  
+                    self.rect.bottom = rect.top
+                    self.on_ground = True
+                    self.vy = 0
+                elif self.vy < 0:
+                    self.rect.top = rect.bottom
+                    self.vy = 0
+                if is_player_instance:
+                    self.health -= 1
+                    rect.jump_hit()
+                self.y = self.rect.y
+
+
+    @property
+    def is_dead(self):
+        return self.health <= 0

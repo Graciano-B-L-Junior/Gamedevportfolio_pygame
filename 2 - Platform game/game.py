@@ -40,7 +40,7 @@ class Game:
         
         # Game Objects
         self.player = None
-        self.enemy = None
+        self.enemies = []
         self.ui = None
         self.platforms = [] # List of (rect, tile_type)
         self.platform_rects = [] # List of rects only, for collision
@@ -67,6 +67,7 @@ class Game:
     def load_map(self):
         self.platforms = []
         self.coins = []
+        self.enemies = []
         for y_map, line in enumerate(TILEMAP):
             for x_map, tile in enumerate(line):
                 pos_x_world = x_map * self.TILE_SIZE
@@ -77,7 +78,7 @@ class Game:
                     rect = pygame.Rect(pos_x_world, pos_y_world, self.TILE_SIZE, self.TILE_SIZE)
                     self.platforms.append((rect, tile))
                 elif tile == 4:
-                    self.enemy = Enemy(pos_x_world, pos_y_world, self.TILE_SIZE, self.TILE_SIZE)
+                    self.enemies.append(Enemy(pos_x_world, pos_y_world, self.TILE_SIZE, self.TILE_SIZE))
 
         self.platform_rects = [p[0] for p in self.platforms]
 
@@ -107,11 +108,14 @@ class Game:
                 self.coins.remove(coin)
 
         collidables = [*self.platform_rects, self.player]
-        self.enemy.update(
-            delta_time,
-            other_rects=collidables,
-            offset_x=self.difference
-        )
+        for enemy in self.enemies[:]:
+            enemy.update(
+                delta_time,
+                other_rects=collidables,
+                offset_x=self.difference
+            )
+            if enemy.is_dead:
+                self.enemies.remove(enemy)
 
     def update(self, delta_time):
         self._update_camera(delta_time)
@@ -134,7 +138,8 @@ class Game:
             coin.draw(self.screen, self.cam_offset_x)
 
         self.player.draw(self.screen, self.cam_offset_x)
-        self.enemy.draw(self.screen, self.cam_offset_x)
+        for enemy in self.enemies:
+            enemy.draw(self.screen, self.cam_offset_x)
         self.ui.draw(self.screen)
 
         pygame.display.flip()
