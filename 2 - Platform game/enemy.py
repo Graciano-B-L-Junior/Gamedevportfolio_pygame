@@ -35,14 +35,14 @@ class Enemy(PhysicsEngine):
             else:
                 rect = other
             if self.rect.colliderect(rect):
-                if self.vx > 0:
-                    self.rect.right = rect.left
-                elif self.vx < 0:
+                if self.rect.left < rect.right:
                     self.rect.left = rect.right
+                elif self.rect.right < rect.left:
+                    self.rect.right = rect.left
+                if is_player_instance:
+                        other.get_hit_signal(self.rect)
                 self.vx *= -1
                 self.x = self.rect.x 
-                if is_player_instance:
-                    other.knock_back_hit(self.rect)
 
     def handle_vertical_collisions(self):
         self.on_ground = False
@@ -50,6 +50,7 @@ class Enemy(PhysicsEngine):
             is_player_instance = False
             if isinstance(rect, Player):
                 is_player_instance = True
+                player_instance = rect
                 rect = rect.rect
             if self.rect.colliderect(rect):
                 if self.vy > 0:  
@@ -61,7 +62,7 @@ class Enemy(PhysicsEngine):
                     self.vy = 0
                 if is_player_instance:
                     self.health -= 1
-                    rect.jump_hit()
+                    player_instance.player_hit_enemy_signal(self.rect)
                 self.y = self.rect.y
 
 

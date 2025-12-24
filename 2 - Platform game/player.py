@@ -1,5 +1,6 @@
 import pygame
 from Physics.physics import PhysicsEngine
+import copy
 
 
 class Player(PhysicsEngine): #TODO: Refactor this class
@@ -13,7 +14,7 @@ class Player(PhysicsEngine): #TODO: Refactor this class
         self.jump_force = -20
         self.maximum_fall_speed = 10
         self.health = 3
-        self.knockback_impulse = 10
+        self.knockback_impulse = 15
         
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         self.color = (255, 0, 0)
@@ -44,6 +45,19 @@ class Player(PhysicsEngine): #TODO: Refactor this class
         # Game info
         self.coins_collected = 0
         self.screen_width = game_screen
+
+        # Collision/hit data
+        self.apply_hit_movement_logic = False
+        self.apply_hit_jump_movement_logic = False
+        self.collision_data = {
+            "enemy" : None,
+            "from_left" : False,
+            "from_right" : False,
+            "from_top" : False,
+            "from_bottom" : False,
+        }
+
+
         
     def draw(self, surface, offset_x=0):
         draw_rect = self.rect.copy()
@@ -152,6 +166,18 @@ class Player(PhysicsEngine): #TODO: Refactor this class
             self.update_vx(self.knockback_impulse)
         
         self.health -= 1
+    
+    def get_hit_signal(self, enemy_rect):
+        self.apply_hit_jump_movement_logic = True
+
+        # if self.rect.centerx < enemy_rect.centerx:
+            # self.update_vx(-(self.knockback_impulse+self.max_speed))
+        # else:
+            # self.update_vx(self.knockback_impulse+self.max_speed)
+
+
+    def player_hit_enemy_signal(self, enemy_rect):
+        pass
     
     def jump_hit(self):
         self.vy = -self.knockback_impulse
