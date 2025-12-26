@@ -96,6 +96,7 @@ class Player(PhysicsEngine): #TODO: Refactor this class
             elif self.vx < 0:
                 self.vx += self.friction * delta_time
                 if self.vx > 0: self.vx = 0
+        
         self.vx = max(-self.max_speed, min(self.max_speed, self.vx))
         
     def _apply_vertical_movement(self, delta_time):
@@ -113,6 +114,15 @@ class Player(PhysicsEngine): #TODO: Refactor this class
         # Gravity
         self.vy += self.gravity * delta_time
         self.vy = min(self.vy, self.maximum_fall_speed)
+
+        if self.apply_hit_movement_logic and self.collision_data["from_top"] or self.collision_data["from_bottom"]:
+            if self.collision_data["from_top"]:
+                self.vy += self.knockback_impulse
+            elif self.collision_data["from_bottom"]:
+                self.vy -= self.knockback_impulse
+            self.apply_hit_jump_movement_logic = False
+            self.reset_collision_data()
+
 
     def handle_horizontal_collisions(self, other_rects):
         self.rect.x += self.vx
@@ -168,12 +178,27 @@ class Player(PhysicsEngine): #TODO: Refactor this class
         self.health -= 1
     
     def get_hit_signal(self, enemy_rect):
-        self.apply_hit_jump_movement_logic = True
+        self.collision_data["enemy"] = enemy_rect
+        self.collision_data["from_left"] = False
+        self.collision_data["from_right"] = False
+        self.collision_data["from_top"] = False
+        self.collision_data["from_bottom"] = False
 
-        # if self.rect.centerx < enemy_rect.centerx:
-            # self.update_vx(-(self.knockback_impulse+self.max_speed))
-        # else:
-            # self.update_vx(self.knockback_impulse+self.max_speed)
+        overlap_x = max(0, min(self.rect.right, enemy_rect.right) - max(self.rect.left, enemy_rect.left))
+        overlap_y = max(0, min(self.rect.bottom, enemy_rect.bottom) - max(self.rect.top, enemy_rect.top))
+        
+        if overlap_x < overlap_y: # Horizontal collision
+            if self.rect.centerx < enemy_rect.centerx:
+                self.collision_data["from_left"] = True
+            else:
+                self.collision_data["from_right"] = True
+        else: # Vertical collision
+            if self.rect.centery < enemy_rect.centery: # Player hit enemy from above
+                self.collision_data["from_top"] = True
+            else: # Player hit enemy from below
+                self.collision_data["from_bottom"] = True
+
+        self.apply_hit_movement_logic = True
 
 
     def player_hit_enemy_signal(self, enemy_rect):
@@ -190,6 +215,15 @@ class Player(PhysicsEngine): #TODO: Refactor this class
 
     def player_dead(self):
         return self.health <= 0
+    
+    def reset_collision_data(self):
+        self.collision_data = {
+            "enemy" : None,
+            "from_left" : False,
+            "from_right" : False,
+            "from_top" : False,
+            "from_bottom" : False,
+        }
        
 
         
