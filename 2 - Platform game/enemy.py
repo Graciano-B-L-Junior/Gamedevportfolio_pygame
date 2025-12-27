@@ -13,7 +13,7 @@ class Enemy(PhysicsEngine):
         self.color_brown = (165, 42, 42)
         self.rect = pygame.Rect(self.x,self.y,self.width,self.height)
         self.other_rects = []
-        self.health = 2
+        self.health = 5
         self.vx = -50 # Start moving left
 
 
@@ -30,18 +30,22 @@ class Enemy(PhysicsEngine):
         for other in self.other_rects:
             is_player_instance = False
             if isinstance(other, Player):
-                is_player_instance = True
                 rect = other.rect
+                is_player_instance = True
             else:
                 rect = other
             if self.rect.colliderect(rect):
-                if self.rect.centerx < rect.centerx:
-                    
+                if isinstance(other, Player) and rect.bottom < self.rect.centery:
+                    continue
+                elif self.rect.centerx < rect.centerx:
                     self.rect.right = rect.left
                 else:
                     self.rect.left = rect.right
+
+                if is_player_instance:
+                    other.get_hit_signal(self.rect)
+
                 self.vx *= -1
-                # self.x = self.rect.x 
 
     def handle_vertical_collisions(self):
         self.on_ground = False
@@ -52,18 +56,17 @@ class Enemy(PhysicsEngine):
                 player_instance = rect
                 rect = rect.rect
             if self.rect.colliderect(rect):
-                if self.vy > 0:  
+                if is_player_instance:
+                    self.health -= 1
+                    print("oi")
+                    player_instance.get_hit_signal(self.rect)
+                elif self.vy > 0:  
                     self.rect.bottom = rect.top
                     self.on_ground = True
                     self.vy = 0
                 elif self.vy < 0:
                     self.rect.top = rect.bottom
                     self.vy = 0
-                if is_player_instance:
-                    self.health -= 1
-                    player_instance.player_hit_enemy_signal(self.rect)
-                # self.y = self.rect.y
-
 
     @property
     def is_dead(self):

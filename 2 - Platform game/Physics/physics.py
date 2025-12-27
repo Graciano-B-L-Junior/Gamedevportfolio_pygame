@@ -29,10 +29,8 @@ class PhysicsEngine:
         self.check_ledge()
 
     def handle_horizontal_collisions(self):
-        colliding = False
         for other in self.other_rects:
             if self.rect.colliderect(other):
-                colliding = True
                 if self.vx > 0:
                     self.rect.right = other.left
                 elif self.vx < 0:

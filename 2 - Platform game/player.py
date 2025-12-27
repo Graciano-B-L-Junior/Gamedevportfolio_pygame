@@ -19,18 +19,16 @@ class Player(PhysicsEngine): #TODO: Refactor this class
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         self.color = (255, 0, 0)
 
-        # Horizontal movement
         self.vx = 0 
         self.acceleration_rate = 10
         self.friction = 30
 
 
-        # Vertical movement
         self.vy = 0
         self.gravity = 60
         self.on_ground = False
         self.is_holding_jump = False
-        self.variable_jump_multiplier = -18 # Reduces upward velocity when jump is held
+        self.variable_jump_multiplier = -18
 
         # Advanced jump mechanics
         self.COYOTE_DURATION = 0.15
@@ -48,7 +46,6 @@ class Player(PhysicsEngine): #TODO: Refactor this class
 
         # Collision/hit data
         self.apply_hit_movement_logic = False
-        self.apply_hit_jump_movement_logic = False
         self.collision_data = {
             "enemy" : None,
             "from_left" : False,
@@ -56,9 +53,7 @@ class Player(PhysicsEngine): #TODO: Refactor this class
             "from_top" : False,
             "from_bottom" : False,
         }
-
-
-        
+   
     def draw(self, surface, offset_x=0):
         draw_rect = self.rect.copy()
         draw_rect.x -= offset_x
@@ -97,6 +92,16 @@ class Player(PhysicsEngine): #TODO: Refactor this class
                 self.vx += self.friction * delta_time
                 if self.vx > 0: self.vx = 0
         
+
+        if self.apply_hit_movement_logic and (self.collision_data["from_left"] or self.collision_data["from_right"]):
+            if self.collision_data["from_left"]:
+                self.vx += self.knockback_impulse
+            elif self.collision_data["from_right"]:
+                self.vx -= self.knockback_impulse
+            
+            self.apply_hit_movement_logic = False
+            self.reset_collision_data()
+
         self.vx = max(-self.max_speed, min(self.max_speed, self.vx))
         
     def _apply_vertical_movement(self, delta_time):
@@ -115,14 +120,16 @@ class Player(PhysicsEngine): #TODO: Refactor this class
         self.vy += self.gravity * delta_time
         self.vy = min(self.vy, self.maximum_fall_speed)
 
-        if self.apply_hit_movement_logic and self.collision_data["from_top"] or self.collision_data["from_bottom"]:
+        if self.apply_hit_movement_logic and (self.collision_data["from_top"] or self.collision_data["from_bottom"]):
+            print(f'collision_data: {self.collision_data}')
             if self.collision_data["from_top"]:
                 self.vy += self.knockback_impulse
             elif self.collision_data["from_bottom"]:
                 self.vy -= self.knockback_impulse
-            self.apply_hit_jump_movement_logic = False
-            self.reset_collision_data()
+            
+            self.apply_hit_movement_logic = False
 
+            self.reset_collision_data()
 
     def handle_horizontal_collisions(self, other_rects):
         self.rect.x += self.vx
@@ -189,9 +196,9 @@ class Player(PhysicsEngine): #TODO: Refactor this class
         
         if overlap_x < overlap_y: # Horizontal collision
             if self.rect.centerx < enemy_rect.centerx:
-                self.collision_data["from_left"] = True
-            else:
                 self.collision_data["from_right"] = True
+            else:
+                self.collision_data["from_left"] = True
         else: # Vertical collision
             if self.rect.centery < enemy_rect.centery: # Player hit enemy from above
                 self.collision_data["from_top"] = True
@@ -200,10 +207,9 @@ class Player(PhysicsEngine): #TODO: Refactor this class
 
         self.apply_hit_movement_logic = True
 
-
     def player_hit_enemy_signal(self, enemy_rect):
-        pass
-    
+        self.y -= self.knockback_impulse
+
     def jump_hit(self):
         self.vy = -self.knockback_impulse
 
