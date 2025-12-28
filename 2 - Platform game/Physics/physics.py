@@ -1,6 +1,4 @@
 import pygame
-from player import Player
-
 
 class PhysicsEngine:
     def __init__(self):
@@ -31,30 +29,28 @@ class PhysicsEngine:
         self.check_ledge()
 
     def handle_horizontal_collisions(self):
-        colliding = False
         for other in self.other_rects:
             if self.rect.colliderect(other):
-                colliding = True
-                if self.vx > 0:  # Moving right
+                if self.vx > 0:
                     self.rect.right = other.left
-                elif self.vx < 0:  # Moving left
+                elif self.vx < 0:
                     self.rect.left = other.right
-                self.vx *= -1  # Reverse direction
-                self.x = self.rect.x # Update position
-                break # Exit after one collision
+                self.vx *= -1
+                self.x = self.rect.x 
+                break
 
     def handle_vertical_collisions(self):
         self.on_ground = False
         for other in self.other_rects:
             if self.rect.colliderect(other):
-                if self.vy > 0:  # Moving down
+                if self.vy > 0:  
                     self.rect.bottom = other.top
                     self.on_ground = True
                     self.vy = 0
-                elif self.vy < 0:  # Moving up
+                elif self.vy < 0:
                     self.rect.top = other.bottom
                     self.vy = 0
-                self.y = self.rect.y # Update position
+                self.y = self.rect.y
 
     def check_ledge(self):
         """Checks if the enemy is at a ledge and turns around if so."""

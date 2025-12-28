@@ -37,17 +37,15 @@ class Game:
         self.clock = pygame.time.Clock()
         self.running = True
         self.TILE_SIZE = self.screen_height // len(TILEMAP)
-        
         # Game Objects
         self.player = None
-        self.enemy = None
+        self.enemies = []
         self.ui = None
         self.platforms = [] # List of (rect, tile_type)
         self.platform_rects = [] # List of rects only, for collision
         self.coins = []
         self._create_entities()
         self.trigger = False
-        
         # Camera
         self.cam_offset_x = 0
         self.target_cam_x = 0
@@ -67,6 +65,7 @@ class Game:
     def load_map(self):
         self.platforms = []
         self.coins = []
+        self.enemies = []
         for y_map, line in enumerate(TILEMAP):
             for x_map, tile in enumerate(line):
                 pos_x_world = x_map * self.TILE_SIZE
@@ -77,7 +76,7 @@ class Game:
                     rect = pygame.Rect(pos_x_world, pos_y_world, self.TILE_SIZE, self.TILE_SIZE)
                     self.platforms.append((rect, tile))
                 elif tile == 4:
-                    self.enemy = Enemy(pos_x_world, pos_y_world, self.TILE_SIZE, self.TILE_SIZE)
+                    self.enemies.append(Enemy(pos_x_world, pos_y_world, self.TILE_SIZE, self.TILE_SIZE))
 
         self.platform_rects = [p[0] for p in self.platforms]
 
@@ -106,12 +105,15 @@ class Game:
             if coin.collected:
                 self.coins.remove(coin)
 
-        enemy_collidables = [*self.platform_rects, self.player.rect]
-        self.enemy.update(
-            delta_time,
-            other_rects=enemy_collidables,
-            offset_x=self.difference
-        )
+        collidables = [*self.platform_rects, self.player]
+        for enemy in self.enemies[:]:
+            enemy.update(
+                delta_time,
+                other_rects=collidables,
+                offset_x=self.difference
+            )
+            if enemy.is_dead:
+                self.enemies.remove(enemy)
 
     def update(self, delta_time):
         self._update_camera(delta_time)
@@ -119,7 +121,6 @@ class Game:
 
     def draw(self):
         self.screen.fill((135, 206, 235))
-
         # Draw level geometry
         for platform_rect, tile_type in self.platforms:
             draw_rect = platform_rect.copy()
@@ -134,14 +135,14 @@ class Game:
             coin.draw(self.screen, self.cam_offset_x)
 
         self.player.draw(self.screen, self.cam_offset_x)
-        self.enemy.draw(self.screen, self.cam_offset_x)
+        for enemy in self.enemies:
+            enemy.draw(self.screen, self.cam_offset_x)
         self.ui.draw(self.screen)
 
         pygame.display.flip()
 
-
     def run(self):
-        while self.running:
+        while self.running: 
             delta_time = self.clock.get_time() / 1000.0
             self.handle_input()
             self.update(delta_time=delta_time)
