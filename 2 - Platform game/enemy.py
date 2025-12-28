@@ -27,11 +27,13 @@ class Enemy(PhysicsEngine):
         super().update(delta_time)
 
     def handle_horizontal_collisions(self):
+        player_instance = None
         for other in self.other_rects:
             is_player_instance = False
             if isinstance(other, Player):
                 rect = other.rect
                 is_player_instance = True
+                player_instance = other
             else:
                 rect = other
             if self.rect.colliderect(rect):
@@ -43,7 +45,7 @@ class Enemy(PhysicsEngine):
                     self.rect.left = rect.right
 
                 if is_player_instance:
-                    other.get_hit_signal(self.rect)
+                    player_instance.get_hit_signal(self.rect)
 
                 self.vx *= -1
 
@@ -58,7 +60,6 @@ class Enemy(PhysicsEngine):
             if self.rect.colliderect(rect):
                 if is_player_instance:
                     self.health -= 1
-                    print("oi")
                     player_instance.get_hit_signal(self.rect)
                 elif self.vy > 0:  
                     self.rect.bottom = rect.top

@@ -37,7 +37,6 @@ class Game:
         self.clock = pygame.time.Clock()
         self.running = True
         self.TILE_SIZE = self.screen_height // len(TILEMAP)
-        
         # Game Objects
         self.player = None
         self.enemies = []
@@ -47,7 +46,6 @@ class Game:
         self.coins = []
         self._create_entities()
         self.trigger = False
-        
         # Camera
         self.cam_offset_x = 0
         self.target_cam_x = 0
@@ -123,7 +121,6 @@ class Game:
 
     def draw(self):
         self.screen.fill((135, 206, 235))
-
         # Draw level geometry
         for platform_rect, tile_type in self.platforms:
             draw_rect = platform_rect.copy()
@@ -143,7 +140,6 @@ class Game:
         self.ui.draw(self.screen)
 
         pygame.display.flip()
-
 
     def run(self):
         while self.running: 

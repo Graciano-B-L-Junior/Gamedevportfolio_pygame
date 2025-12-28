@@ -45,7 +45,8 @@ class Player(PhysicsEngine): #TODO: Refactor this class
         self.screen_width = game_screen
 
         # Collision/hit data
-        self.apply_hit_movement_logic = False
+        self.apply_hit_horizontal_movement_logic = False
+        self.apply_hit_vertical_movement_logic = False
         self.collision_data = {
             "enemy" : None,
             "from_left" : False,
@@ -93,14 +94,15 @@ class Player(PhysicsEngine): #TODO: Refactor this class
                 if self.vx > 0: self.vx = 0
         
 
-        if self.apply_hit_movement_logic and (self.collision_data["from_left"] or self.collision_data["from_right"]):
+        if self.apply_hit_horizontal_movement_logic and (self.collision_data["from_left"] or self.collision_data["from_right"]):
             if self.collision_data["from_left"]:
                 self.vx += self.knockback_impulse
             elif self.collision_data["from_right"]:
                 self.vx -= self.knockback_impulse
             
-            self.apply_hit_movement_logic = False
-            self.reset_collision_data()
+            self.apply_hit_horizontal_movement_logic = False
+            if not self.apply_hit_vertical_movement_logic:
+                self.reset_collision_data()
 
         self.vx = max(-self.max_speed, min(self.max_speed, self.vx))
         
@@ -120,14 +122,13 @@ class Player(PhysicsEngine): #TODO: Refactor this class
         self.vy += self.gravity * delta_time
         self.vy = min(self.vy, self.maximum_fall_speed)
 
-        if self.apply_hit_movement_logic and (self.collision_data["from_top"] or self.collision_data["from_bottom"]):
-            print(f'collision_data: {self.collision_data}')
+        if self.apply_hit_vertical_movement_logic and (self.collision_data["from_top"] or self.collision_data["from_bottom"]):
             if self.collision_data["from_top"]:
-                self.vy += self.knockback_impulse
+                self.vy = -self.knockback_impulse
             elif self.collision_data["from_bottom"]:
-                self.vy -= self.knockback_impulse
+                self.vy = self.knockback_impulse
             
-            self.apply_hit_movement_logic = False
+            self.apply_hit_vertical_movement_logic = False
 
             self.reset_collision_data()
 
@@ -194,18 +195,18 @@ class Player(PhysicsEngine): #TODO: Refactor this class
         overlap_x = max(0, min(self.rect.right, enemy_rect.right) - max(self.rect.left, enemy_rect.left))
         overlap_y = max(0, min(self.rect.bottom, enemy_rect.bottom) - max(self.rect.top, enemy_rect.top))
         
-        if overlap_x < overlap_y: # Horizontal collision
+        if overlap_x < overlap_y:
             if self.rect.centerx < enemy_rect.centerx:
                 self.collision_data["from_right"] = True
             else:
                 self.collision_data["from_left"] = True
-        else: # Vertical collision
-            if self.rect.centery < enemy_rect.centery: # Player hit enemy from above
+            self.apply_hit_horizontal_movement_logic = True
+        else:
+            if self.rect.centery < enemy_rect.centery:
                 self.collision_data["from_top"] = True
-            else: # Player hit enemy from below
+            else:
                 self.collision_data["from_bottom"] = True
-
-        self.apply_hit_movement_logic = True
+            self.apply_hit_vertical_movement_logic = True
 
     def player_hit_enemy_signal(self, enemy_rect):
         self.y -= self.knockback_impulse
