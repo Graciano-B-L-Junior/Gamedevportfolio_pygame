@@ -1,7 +1,7 @@
 import pygame
 from player import Player
 from coin import Coin
-from ui import UI
+from ui import UI, UI_GameOver, UI_Win
 from enemy import Enemy
 
 TILEMAP = [
@@ -19,7 +19,7 @@ TILEMAP = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [2, 2, 2, 2, 2, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [1, 1, 1, 1, 1, 0, 3, 2, 2, 2, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 0, 3, 2, 2, 2, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ]
 
@@ -41,9 +41,12 @@ class Game:
         self.player = None
         self.enemies = []
         self.ui = None
+        self.ui_game_over = None
+        self.ui_win = None
         self.platforms = [] # List of (rect, tile_type)
         self.platform_rects = [] # List of rects only, for collision
         self.coins = []
+        self.coins_length = None
         self._create_entities()
         self.trigger = False
         # Camera
@@ -61,6 +64,8 @@ class Game:
 
         self.player = Player(2 * self.TILE_SIZE, 5 * self.TILE_SIZE, world_x_size)
         self.ui = UI(game=self)
+        self.ui_game_over = UI_GameOver(game=self)
+        self.ui_win = UI_Win(game=self)
 
     def load_map(self):
         self.platforms = []
@@ -77,13 +82,20 @@ class Game:
                     self.platforms.append((rect, tile))
                 elif tile == 4:
                     self.enemies.append(Enemy(pos_x_world, pos_y_world, self.TILE_SIZE, self.TILE_SIZE))
-
+        self.coins_length = len(self.coins)
         self.platform_rects = [p[0] for p in self.platforms]
 
     def handle_input(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r and (self.player.coins_collected == self.coins_length or self.player.player_dead()):
+                    self._create_entities()
+                    self.cam_offset_x = 0
+                    self.target_cam_x = 0
+                    self.last_cam_offset_x = 0
+                    self.difference = 0
 
     def _update_camera(self, delta_time):
         self.target_cam_x = self.player.rect.centerx - self.screen_width // 2
@@ -138,6 +150,11 @@ class Game:
         for enemy in self.enemies:
             enemy.draw(self.screen, self.cam_offset_x)
         self.ui.draw(self.screen)
+
+        if self.player.player_dead():
+            self.ui_game_over.draw(self.screen)
+        elif self.player.coins_collected == self.coins_length:
+            self.ui_win.draw(self.screen)
 
         pygame.display.flip()
 

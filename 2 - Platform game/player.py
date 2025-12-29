@@ -13,7 +13,7 @@ class Player(PhysicsEngine): #TODO: Refactor this class
         self.max_speed = 5
         self.jump_force = -20
         self.maximum_fall_speed = 10
-        self.health = 3
+        self._health = 3
         self.knockback_impulse = 15
         
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
@@ -201,6 +201,7 @@ class Player(PhysicsEngine): #TODO: Refactor this class
             else:
                 self.collision_data["from_left"] = True
             self.apply_hit_horizontal_movement_logic = True
+            self.health-=1
         else:
             if self.rect.centery < enemy_rect.centery:
                 self.collision_data["from_top"] = True
@@ -222,6 +223,15 @@ class Player(PhysicsEngine): #TODO: Refactor this class
 
     def player_dead(self):
         return self.health <= 0
+    
+    @property
+    def health(self):
+        return self._health
+    
+    @health.setter
+    def health(self, value):
+        self._health = max(0, value)
+    
     
     def reset_collision_data(self):
         self.collision_data = {
