@@ -16,6 +16,7 @@ class Player(PhysicsEngine): #TODO: Refactor this class
         self._health = 3
         self.knockback_impulse = 15
         self.game = game
+        self.hit_timer = 0
         
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         self.color = (255, 0, 0)
@@ -59,7 +60,10 @@ class Player(PhysicsEngine): #TODO: Refactor this class
     def draw(self, surface, offset_x=0):
         draw_rect = self.rect.copy()
         draw_rect.x -= offset_x
-        pygame.draw.rect(surface, self.color, draw_rect)
+        if self.hit_timer > 0:
+            pygame.draw.rect(surface, (255, 255, 255), draw_rect)
+        else:
+            pygame.draw.rect(surface, self.color, draw_rect)
 
     def _handle_input(self):
         keys = pygame.key.get_pressed()
@@ -82,6 +86,9 @@ class Player(PhysicsEngine): #TODO: Refactor this class
         
         if self.buffer_jump > 0:
             self.buffer_jump -= delta_time
+
+        if self.hit_timer > 0:
+            self.hit_timer -= delta_time
 
     def _apply_horizontal_movement(self, delta_time, offset_x):
         if self.move_direction != 0:
@@ -208,6 +215,7 @@ class Player(PhysicsEngine): #TODO: Refactor this class
             self.apply_hit_horizontal_movement_logic = True
             self.health-=1
             self.game.player_hurt_sfx()
+            self.hit_timer = 0.2
         else:
             if self.rect.centery < enemy_rect.centery:
                 self.collision_data["from_top"] = True
