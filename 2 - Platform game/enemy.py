@@ -15,15 +15,21 @@ class Enemy(PhysicsEngine):
         self.other_rects = []
         self.health = 5
         self.vx = -50 # Start moving left
+        self.hit_timer = 0
 
 
     def draw(self,win, offset_x=0):
         draw_rect = self.rect.copy()
         draw_rect.x -= offset_x
-        pygame.draw.rect(win,self.color_brown,draw_rect)
+        if self.hit_timer > 0:
+            pygame.draw.rect(win, (255, 255, 255), draw_rect)
+        else:
+            pygame.draw.rect(win,self.color_brown,draw_rect)
         
     def update(self,delta_time, other_rects=None, offset_x=0):
         self.other_rects = other_rects
+        if self.hit_timer > 0:
+            self.hit_timer -= delta_time
         super().update(delta_time)
 
     def handle_horizontal_collisions(self):
@@ -60,6 +66,8 @@ class Enemy(PhysicsEngine):
             if self.rect.colliderect(rect):
                 if is_player_instance:
                     self.health -= 1
+                    self.hit_timer = 0.2
+                    player_instance.game.enemy_hurt_sfx()
                     player_instance.get_hit_signal(self.rect)
                 elif self.vy > 0:  
                     self.rect.bottom = rect.top

@@ -1,7 +1,7 @@
-import pygame
+import pygame, os
 from player import Player
 from coin import Coin
-from ui import UI
+from ui import UI, UI_GameOver, UI_Win
 from enemy import Enemy
 
 TILEMAP = [
@@ -19,7 +19,7 @@ TILEMAP = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [2, 2, 2, 2, 2, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [1, 1, 1, 1, 1, 0, 3, 2, 2, 2, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 0, 3, 2, 2, 2, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ]
 
@@ -35,15 +35,37 @@ class Game:
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption("2D Platformer")
         self.clock = pygame.time.Clock()
+        
+        # --- SISTEMA DE ÁUDIO ---
+        # Carregar e tocar música de fundo (-1 faz loop infinito)
+        # pygame.mixer.music.load('assets/music.mp3') 
+        # pygame.mixer.music.play(-1)
+        # pygame.mixer.music.set_volume(0.5) # Volume entre 0.0 e 1.0
+
+        # Carregar efeitos sonoros
+        # self.coin_sfx = pygame.mixer.Sound('assets/coin.wav')
+        self.assets_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets','audio')
+        self.bmgs = ['bgm.mp3']
+        self.sfxs = ['coin.mp3','jump.mp3','enemy_hurt.mp3','player_hurt.mp3']
+
+        self.audio_player = {
+            "music": self.bmgs,
+            "sfx": self.sfxs
+        }
+        
+
         self.running = True
         self.TILE_SIZE = self.screen_height // len(TILEMAP)
         # Game Objects
         self.player = None
         self.enemies = []
         self.ui = None
+        self.ui_game_over = None
+        self.ui_win = None
         self.platforms = [] # List of (rect, tile_type)
         self.platform_rects = [] # List of rects only, for collision
         self.coins = []
+        self.coins_length = None
         self._create_entities()
         self.trigger = False
         # Camera
@@ -54,13 +76,35 @@ class Game:
         self.difference = 0
 
         self.MAP_WIDTH_PIXELS = len(TILEMAP[0]) * self.TILE_SIZE
+    
+    def _start_bgm(self):
+        pygame.mixer.music.load(os.path.join(self.assets_folder, self.audio_player["music"][0]))
+        pygame.mixer.music.play(-1)
+        pygame.mixer.music.set_volume(0.5)
+
+    def jump_sfx(self):
+        pygame.mixer.Sound.play(pygame.mixer.Sound(os.path.join(self.assets_folder, self.audio_player["sfx"][1])))
+
+    def coin_sfx(self):
+        pygame.mixer.Sound.play(pygame.mixer.Sound(os.path.join(self.assets_folder, self.audio_player["sfx"][0])))
+
+    def enemy_hurt_sfx(self):
+        pygame.mixer.Sound.play(pygame.mixer.Sound(os.path.join(self.assets_folder, self.audio_player["sfx"][2])))
+
+    def player_hurt_sfx(self):
+        pygame.mixer.Sound.play(pygame.mixer.Sound(os.path.join(self.assets_folder, self.audio_player["sfx"][3])))
 
     def _create_entities(self):
         self.load_map()
         world_x_size = len(TILEMAP[0]) * self.TILE_SIZE
 
-        self.player = Player(2 * self.TILE_SIZE, 5 * self.TILE_SIZE, world_x_size)
+        self.player = Player(2 * self.TILE_SIZE, 5 * self.TILE_SIZE, world_x_size, self)
         self.ui = UI(game=self)
+        self.ui_game_over = UI_GameOver(game=self)
+        self.ui_win = UI_Win(game=self)
+
+        self._start_bgm()
+        
 
     def load_map(self):
         self.platforms = []
@@ -77,13 +121,20 @@ class Game:
                     self.platforms.append((rect, tile))
                 elif tile == 4:
                     self.enemies.append(Enemy(pos_x_world, pos_y_world, self.TILE_SIZE, self.TILE_SIZE))
-
+        self.coins_length = len(self.coins)
         self.platform_rects = [p[0] for p in self.platforms]
 
     def handle_input(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r and (self.player.coins_collected == self.coins_length or self.player.player_dead()):
+                    self._create_entities()
+                    self.cam_offset_x = 0
+                    self.target_cam_x = 0
+                    self.last_cam_offset_x = 0
+                    self.difference = 0
 
     def _update_camera(self, delta_time):
         self.target_cam_x = self.player.rect.centerx - self.screen_width // 2
@@ -138,6 +189,11 @@ class Game:
         for enemy in self.enemies:
             enemy.draw(self.screen, self.cam_offset_x)
         self.ui.draw(self.screen)
+
+        if self.player.player_dead():
+            self.ui_game_over.draw(self.screen)
+        elif self.player.coins_collected == self.coins_length:
+            self.ui_win.draw(self.screen)
 
         pygame.display.flip()
 
