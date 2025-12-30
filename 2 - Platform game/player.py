@@ -4,7 +4,7 @@ import copy
 
 
 class Player(PhysicsEngine): #TODO: Refactor this class
-    def __init__(self, x, y, game_screen):
+    def __init__(self, x, y, game_screen, game):
         super().__init__()
         self.x = x
         self.y = y
@@ -15,6 +15,7 @@ class Player(PhysicsEngine): #TODO: Refactor this class
         self.maximum_fall_speed = 10
         self._health = 3
         self.knockback_impulse = 15
+        self.game = game
         
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         self.color = (255, 0, 0)
@@ -113,6 +114,7 @@ class Player(PhysicsEngine): #TODO: Refactor this class
             self.on_ground = False
             self.coyote_time = 0
             self.buffer_jump = 0
+            self.game.jump_sfx()
         
         # Variable jump height
         if self.is_holding_jump and self.vy < 0:
@@ -202,6 +204,7 @@ class Player(PhysicsEngine): #TODO: Refactor this class
                 self.collision_data["from_left"] = True
             self.apply_hit_horizontal_movement_logic = True
             self.health-=1
+            self.game.player_hurt_sfx()
         else:
             if self.rect.centery < enemy_rect.centery:
                 self.collision_data["from_top"] = True

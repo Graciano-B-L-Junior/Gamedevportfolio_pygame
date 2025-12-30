@@ -20,3 +20,4 @@ class Coin:
         if not self.collected and self.rect.colliderect(player.rect):
             self.collected = True
             player.update_collected_coins(1)
+            player.game.coin_sfx()

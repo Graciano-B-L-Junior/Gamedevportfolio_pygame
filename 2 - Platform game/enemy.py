@@ -60,6 +60,7 @@ class Enemy(PhysicsEngine):
             if self.rect.colliderect(rect):
                 if is_player_instance:
                     self.health -= 1
+                    player_instance.game.enemy_hurt_sfx()
                     player_instance.get_hit_signal(self.rect)
                 elif self.vy > 0:  
                     self.rect.bottom = rect.top

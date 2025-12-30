@@ -1,4 +1,4 @@
-import pygame
+import pygame, os
 from player import Player
 from coin import Coin
 from ui import UI, UI_GameOver, UI_Win
@@ -35,6 +35,25 @@ class Game:
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption("2D Platformer")
         self.clock = pygame.time.Clock()
+        
+        # --- SISTEMA DE ÁUDIO ---
+        # Carregar e tocar música de fundo (-1 faz loop infinito)
+        # pygame.mixer.music.load('assets/music.mp3') 
+        # pygame.mixer.music.play(-1)
+        # pygame.mixer.music.set_volume(0.5) # Volume entre 0.0 e 1.0
+
+        # Carregar efeitos sonoros
+        # self.coin_sfx = pygame.mixer.Sound('assets/coin.wav')
+        self.assets_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets','audio')
+        self.bmgs = ['bgm.mp3']
+        self.sfxs = ['coin.mp3','jump.mp3','enemy_hurt.mp3','player_hurt.mp3']
+
+        self.audio_player = {
+            "music": self.bmgs,
+            "sfx": self.sfxs
+        }
+        
+
         self.running = True
         self.TILE_SIZE = self.screen_height // len(TILEMAP)
         # Game Objects
@@ -57,15 +76,35 @@ class Game:
         self.difference = 0
 
         self.MAP_WIDTH_PIXELS = len(TILEMAP[0]) * self.TILE_SIZE
+    
+    def _start_bgm(self):
+        pygame.mixer.music.load(os.path.join(self.assets_folder, self.audio_player["music"][0]))
+        pygame.mixer.music.play(-1)
+        pygame.mixer.music.set_volume(0.7)
+
+    def jump_sfx(self):
+        pygame.mixer.Sound.play(pygame.mixer.Sound(os.path.join(self.assets_folder, self.audio_player["sfx"][1])))
+
+    def coin_sfx(self):
+        pygame.mixer.Sound.play(pygame.mixer.Sound(os.path.join(self.assets_folder, self.audio_player["sfx"][0])))
+
+    def enemy_hurt_sfx(self):
+        pygame.mixer.Sound.play(pygame.mixer.Sound(os.path.join(self.assets_folder, self.audio_player["sfx"][2])))
+
+    def player_hurt_sfx(self):
+        pygame.mixer.Sound.play(pygame.mixer.Sound(os.path.join(self.assets_folder, self.audio_player["sfx"][3])))
 
     def _create_entities(self):
         self.load_map()
         world_x_size = len(TILEMAP[0]) * self.TILE_SIZE
 
-        self.player = Player(2 * self.TILE_SIZE, 5 * self.TILE_SIZE, world_x_size)
+        self.player = Player(2 * self.TILE_SIZE, 5 * self.TILE_SIZE, world_x_size, self)
         self.ui = UI(game=self)
         self.ui_game_over = UI_GameOver(game=self)
         self.ui_win = UI_Win(game=self)
+
+        self._start_bgm()
+        
 
     def load_map(self):
         self.platforms = []
