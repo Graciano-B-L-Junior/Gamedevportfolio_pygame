@@ -165,6 +165,9 @@ class Player(PhysicsEngine): #TODO: Refactor this class
             self.rect.left = 0
             self.vx = 0
 
+        if self.rect.top > self.game.screen_height:
+            self.health = 0
+
     def update(self, other_rects, **kwargs):
         delta_time = kwargs.get("delta_time")
         if delta_time is None: delta_time = 1/60.0

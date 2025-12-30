@@ -80,7 +80,7 @@ class Game:
     def _start_bgm(self):
         pygame.mixer.music.load(os.path.join(self.assets_folder, self.audio_player["music"][0]))
         pygame.mixer.music.play(-1)
-        pygame.mixer.music.set_volume(0.7)
+        pygame.mixer.music.set_volume(0.5)
 
     def jump_sfx(self):
         pygame.mixer.Sound.play(pygame.mixer.Sound(os.path.join(self.assets_folder, self.audio_player["sfx"][1])))
